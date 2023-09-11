@@ -5,8 +5,7 @@ This guide explains how to use the exported functions from `trie-rules`.
 ## Exported Functions
 
 ```bash
-# compile to a <script> containing a self-executing function
-npm i @ragaeeb/trie-rules
+npm i trie-rules
 ```
 
 ## Exported Functions
