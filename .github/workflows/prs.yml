@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+    - "e/*"
+    - "f/*"
+    - "b/*"
+    - "t/*"
+
+jobs:
+  pull-request:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: pull-request
+      uses: repo-sync/pull-request@v2.12.1
+      with:
+        pr_title: ${{ github.event.commits[0].message }}
+        pr_milestone: "next"
+        pr_assignee: "ragaeeb"
+        pr_draft: false
+        github_token: ${{ secrets.GITHUB_TOKEN }}
