@@ -16,8 +16,7 @@ jobs:
             - uses: actions/checkout@v4
             - name: Create Pull Request
               run: |
-                  first_contributor=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/contributors | jq -r '.[0].login')
                   gh_pr_up() { gh pr create $* || gh pr edit $* }
-                  gh_pr_up --title "${{ github.event.commits[0].message }}" --milestone 'next' --assignee "$first_contributor" --draft false
+                  gh_pr_up --title "${{ github.event.commits[0].message }}" --milestone 'next' --assignee 'ragaeeb' --draft false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
