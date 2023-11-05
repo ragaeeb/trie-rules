@@ -1,0 +1,13 @@
+version: 2
+updates:
+    - package-ecosystem: 'npm'
+      directory: '/'
+      schedule:
+          interval: 'daily'
+      automerge: true
+      target-branch: 'main'
+      labels:
+          - 'dependencies'
+          - 'automerge'
+      commit-message:
+          prefix: 'fix'
