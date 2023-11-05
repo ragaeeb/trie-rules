@@ -5,7 +5,7 @@
   "main": "dist/main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ragaeeb/trie-rules.git"
+    "url": "git+https://github.com/ragaeeb/trie-rules.git"
   },
   "files": [
     "dist/main.js",
