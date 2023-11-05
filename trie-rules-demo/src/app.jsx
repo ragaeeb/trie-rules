@@ -1,21 +1,27 @@
-import { h } from 'preact';
-import { useState } from 'preact/hooks';
-import { buildTrie, searchAndReplace } from 'trie-rules';
-import './app.css'; // This line should be at the top of your file
-import packageInfo from '../package.json';
+import { h } from "preact";
+import { useState } from "preact/hooks";
+import { buildTrie, searchAndReplace } from "trie-rules";
+import "./app.css"; // This line should be at the top of your file
+import packageInfo from "../package.json";
 
-const DEFAULT_RULES = JSON.stringify([
-  {
-    target: 'Bukhārī',
-    sources: ['Bukhari', 'Bukhaaree'],
-    options: { prefix: 'al-', match: 'whole' }
-  },
-  { target: 'Qurʾān', sources: ['Quran', 'Quraan'] }
-], null, 2);
+const DEFAULT_RULES = JSON.stringify(
+  [
+    {
+      target: "Bukhārī",
+      sources: ["Bukhari", "Bukhaaree"],
+      options: { prefix: "al-", match: "whole" },
+    },
+    { target: "Qurʾān", sources: ["Quran", "Quraan"] },
+  ],
+  null,
+  2
+);
 
 export function App() {
   const [rules, setRules] = useState(DEFAULT_RULES);
-  const [text, setText] = useState('Bukhari and Muslim are the most authentic books we have after the Quran.');
+  const [text, setText] = useState(
+    "Bukhari and Muslim are the most authentic books we have after the Quran."
+  );
 
   const handleRulesChange = (event) => {
     setRules(event.target.value);
@@ -32,13 +38,13 @@ export function App() {
       const replacedText = searchAndReplace(trie, text);
       setText(replacedText);
     } catch (error) {
-      alert('Error parsing rules or processing text: ' + error.message);
+      alert("Error parsing rules or processing text: " + error.message);
     }
   };
 
   return (
     <div>
-      <h1>Trie-Rules v{packageInfo.dependencies['trie-rules']} Demo</h1>
+      <h1>Trie-Rules v{packageInfo.dependencies["trie-rules"]} Demo</h1>
       <div>
         <textarea
           value={rules}
@@ -46,10 +52,10 @@ export function App() {
           onChange={handleRulesChange}
           placeholder="Enter rules in JSON format"
         />
-        <br/>
+        <br />
         <textarea
           value={text}
-          style={{minWidth: '100%'}}
+          style={{ minWidth: "100%" }}
           onChange={handleTextChange}
           placeholder="Enter text to process"
         />
@@ -57,5 +63,4 @@ export function App() {
       </div>
     </div>
   );
-
 }
