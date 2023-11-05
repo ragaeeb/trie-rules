@@ -7,7 +7,11 @@
     "type": "git",
     "url": "https://github.com/ragaeeb/trie-rules.git"
   },
-  "files": ["dist/main.js", "dist/main.js.map"],
+  "files": [
+    "dist/main.js",
+    "dist/main.js.map",
+    "dist/*.d.ts"
+  ],
   "private": false,
   "source": "src/index.js",
   "type": "module",
@@ -16,12 +20,12 @@
   },
   "targets": {
     "main": {
-		  "optimize": true
-	  }
+      "optimize": true
+    }
   },
   "scripts": {
     "watch": "parcel watch",
-    "build": "parcel build",
+    "build": "parcel build && cp src/trie.d.ts dist",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "keywords": [
@@ -32,13 +36,17 @@
   "author": "Ragaeeb Haq",
   "license": "UNLICENSED",
   "devDependencies": {
-    "eslint": "^8.49.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-import": "^2.28.1",
-    "eslint-plugin-prettier": "^5.0.0",
-    "jest": "^27.0.0",
-    "parcel": "^2.9.3",
-    "prettier": "^3.0.3"
+    "@jest/globals": "30.0.0-alpha.1",
+    "@semantic-release/changelog": "6.0.3",
+    "eslint": "8.53.0",
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-config-prettier": "9.0.0",
+    "eslint-plugin-import": "2.29.0",
+    "eslint-plugin-prettier": "5.0.1",
+    "eslint-plugin-simple-import-sort": "10.0.0",
+    "jest": "30.0.0-alpha.1",
+    "parcel": "2.10.2",
+    "prettier": "3.0.3",
+    "semantic-release": "22.0.7"
   }
 }

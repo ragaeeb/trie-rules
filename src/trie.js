@@ -91,16 +91,25 @@ export const containsTarget = (trie, text, { caseInsensitive } = {}) => {
  *
  * @param {string} prevChar - The character immediately preceding the match.
  * @param {string} nextChar - The character immediately following the match.
- * @param {Object} options - Options for matching.
+ * @param {Object} options - Options for matching, which may include 'match' and 'prefix'.
+ * @param {string} text - The full text being searched.
+ * @param {number} matchStartIndex - The index in the text where the current match starts.
  * @returns {boolean} - True if the match is valid, false otherwise.
  */
-const isValidMatch = (prevChar, nextChar, options) => {
+const isValidMatch = (prevChar, nextChar, options, text, matchStartIndex) => {
     if (options && options.match === 'whole') {
         return !WORD_BOUNDARY.test(prevChar) && !WORD_BOUNDARY.test(nextChar);
     }
 
     if (options?.match === 'alone') {
         return /\s/.test(prevChar) && /\s/.test(nextChar);
+    }
+
+    if (options?.prefix) {
+        const prefixLength = options.prefix.length;
+        const startOfPrefix = matchStartIndex - prefixLength;
+        // It's a valid match if the prefix is not present, as we will add it
+        return startOfPrefix < 0 || text.slice(startOfPrefix, matchStartIndex) !== options.prefix;
     }
 
     return true;
@@ -137,7 +146,7 @@ export const searchAndReplace = (trie, text) => {
             const { index, node: potentialNode } = potentialMatches[k];
             const prevChar = text[i - 1] || '';
             const nextChar = text[index + 1] || ''; // +1 to get the character immediately after the match
-            if (isValidMatch(prevChar, nextChar, potentialNode.options)) {
+            if (isValidMatch(prevChar, nextChar, potentialNode.options, text, i)) {
                 longestValidMatch = potentialNode;
                 j = index + 1; // +1 to move to the character immediately after the match
                 break;
@@ -145,6 +154,16 @@ export const searchAndReplace = (trie, text) => {
         }
 
         if (longestValidMatch) {
+            if (longestValidMatch.options?.prefix) {
+                const prefixLength = longestValidMatch.options.prefix.length;
+                const startOfPrefix = i - prefixLength;
+                const hasPrefix =
+                    startOfPrefix >= 0 && text.slice(startOfPrefix, i) === longestValidMatch.options.prefix;
+                if (!hasPrefix) {
+                    result += longestValidMatch.options.prefix;
+                }
+            }
+
             result += longestValidMatch.target;
             i = j;
         } else {
@@ -154,35 +173,4 @@ export const searchAndReplace = (trie, text) => {
     }
 
     return result;
-};
-
-/**
- * Compiles regex patterns based on the provided rules.
- *
- * @param {Array<Object>} rules - An array of objects representing the regex rules.
- * @returns {Array<Object>} - An array of compiled regex rules.
- */
-export const compileRegexPatterns = (rules) => {
-    const compiled = rules.map(({ flags, pattern, ...rule }) => {
-        return { regex: new RegExp(pattern, flags), ...rule };
-    });
-
-    return compiled;
-};
-
-/**
- * Applies regex replacements to the text based on the provided rules.
- *
- * @param {Array<Object>} rules - An array of objects representing the regex rules.
- * @param {string} text - The text to apply regex replacements to.
- * @returns {string} - The modified text.
- */
-export const applyRegexReplacements = (rules, text) => {
-    let modifiedText = text;
-
-    rules.forEach((rule) => {
-        modifiedText = modifiedText.replace(rule.regex, rule.replacement);
-    });
-
-    return modifiedText;
 };
