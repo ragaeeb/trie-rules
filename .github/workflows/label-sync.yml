@@ -11,5 +11,3 @@ jobs:
             - uses: lannonbr/issue-label-manager-action@4.0.0
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  delete: true
