@@ -57,7 +57,7 @@ export function App() {
           value={text}
           style={{ minWidth: "100%" }}
           onChange={handleTextChange}
-          placeholder="Enter text to process"
+          placeholder="Enter text to format"
         />
         <button onClick={handleProcessText}>Process Text</button>
       </div>
