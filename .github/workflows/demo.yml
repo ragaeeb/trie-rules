@@ -5,6 +5,10 @@ on:
     branches:
       - demo # Set this to the branch you want to trigger the deployment from.
 
+permissions:
+  contents: write
+  pages: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
