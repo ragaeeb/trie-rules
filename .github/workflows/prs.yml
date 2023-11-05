@@ -14,11 +14,9 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - name: Create or Edit Pull Request
+            - name: Create Pull Request
               run: |
-                  set -e
-                  if ! gh pr create --title "${{ github.event.commits[0].message }}" --milestone 'next' --assignee 'ragaeeb' --draft false; then
-                    gh pr edit --title "${{ github.event.commits[0].message }}" --milestone 'next' --assignee 'ragaeeb' --draft false
-                  fi
+                  gh pr create --title "${{ github.event.commits[0].message }}" --milestone 'next' --draft 'false' || \
+                  gh pr edit --add-assignee 'ragaeeb'
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
