@@ -3,11 +3,9 @@ updates:
     - package-ecosystem: 'npm'
       directory: '/'
       schedule:
-          interval: 'daily'
-      automerge: true
+          interval: 'weekly'
       target-branch: 'main'
       labels:
           - 'dependencies'
-          - 'automerge'
       commit-message:
           prefix: 'fix'
