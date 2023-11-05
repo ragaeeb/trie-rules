@@ -1,11 +1,6 @@
-import {
-    applyRegexReplacements,
-    buildTrie,
-    compileRegexPatterns,
-    containsSource,
-    containsTarget,
-    searchAndReplace,
-} from './trie';
+import { beforeAll, describe, expect, it } from '@jest/globals';
+
+import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
 
 describe('trie', () => {
     let rules = [];
@@ -569,239 +564,52 @@ describe('trie', () => {
                 expect(searchAndReplace(trie, 'this is')).toEqual('this is');
             });
         });
-    });
 
-    describe('applyRegexReplacements', () => {
-        describe('applySmartQuotes', () => {
-            beforeEach(() => {
-                rules = compileRegexPatterns([
+        describe('searchAndReplace with prefix option', () => {
+            it('should add the prefix if not present', () => {
+                rules = [{ target: 'Bukhārī', options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari'] }];
+                trie = buildTrie(rules);
+                const actual = searchAndReplace(trie, 'I read Bukhari yesterday.');
+                expect(actual).toEqual('I read al-Bukhārī yesterday.');
+            });
+
+            it('should not add the prefix if it is already present', () => {
+                rules = [{ target: 'Bukhārī', options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari'] }];
+                trie = buildTrie(rules);
+                const actual = searchAndReplace(trie, 'I read al-Bukhari yesterday.');
+                expect(actual).toEqual('I read al-Bukhārī yesterday.');
+            });
+
+            it('should handle multiple rules and cases where prefix is not needed', () => {
+                rules = [
+                    { target: 'Bukhārī', options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari', 'Bukharee'] },
+                    { target: 'Muslim', options: { match: 'whole' }, sources: ['Muslim'] },
+                ];
+                trie = buildTrie(rules);
+                const actual = searchAndReplace(trie, 'Bukharee and Muslim are both hadith books.');
+                expect(actual).toEqual('al-Bukhārī and Muslim are both hadith books.');
+            });
+
+            it('should handle multiple variations', () => {
+                rules = [
                     {
-                        flags: 'g',
-                        pattern: '"([^"]*)"',
-                        replacement: `“$1”`,
+                        target: 'Bukhārī',
+                        options: { match: 'whole', prefix: 'al-' },
+                        sources: ['Bukhari', 'Bukharee', 'Bukhaaree'],
                     },
                     {
-                        flags: 'g',
-                        pattern: `^”`,
-                        replacement: '“',
+                        target: 'Shawkānī',
+                        options: { match: 'whole', prefix: 'al-' },
+                        sources: ['Shawkani', 'Shawkaanee', 'Shawkaani', 'ash-Shawkani'],
                     },
-                ]);
-            });
-
-            it('quotes', () => {
-                expect(
-                    applyRegexReplacements(rules, 'The "quick brown" fox jumped "right" over the lazy dog.'),
-                ).toEqual('The “quick brown” fox jumped “right” over the lazy dog.');
-            });
-
-            it('no-op', () => {
-                expect(applyRegexReplacements(rules, 'this is')).toEqual('this is');
-            });
-        });
-
-        describe('al- replacements', () => {
-            beforeEach(() => {
-                rules = compileRegexPatterns([
-                    {
-                        flags: 'g',
-                        pattern: '(\\b|\\W)(Al-|Ar-|As-|Adh-|adh-|as-|ar-)',
-                        replacement: '$1al-',
-                    },
-                ]);
-            });
-
-            it('should replace all the al-s', () => {
-                expect(
-                    applyRegexReplacements(
-                        rules,
-                        'Al-Rahman bar-Rahman becomes al-Rahman, and ar-Rahman becomes al-Rahman, and As-Sukkari and as-Sukkari both become al-Sukkari, and adh-Dhahabi and Adh-Dhahabi both turn to al-Dhahabi',
-                    ),
-                ).toEqual(
-                    'al-Rahman bar-Rahman becomes al-Rahman, and al-Rahman becomes al-Rahman, and al-Sukkari and al-Sukkari both become al-Sukkari, and al-Dhahabi and al-Dhahabi both turn to al-Dhahabi',
+                ];
+                trie = buildTrie(rules);
+                const actual = searchAndReplace(
+                    trie,
+                    'Bukhari went to the store with ash-Shawkani. Then Shawkaanee and al-Bukharee went home, except Shawkaani went to sleep.',
                 );
-            });
-        });
-
-        describe('reduceSpacesBeforePunctuation', () => {
-            beforeEach(() => {
-                rules = compileRegexPatterns([
-                    {
-                        flags: 'g',
-                        pattern: '\\s+([.؟!,،؛:?])',
-                        replacement: '$1',
-                    },
-                ]);
-            });
-
-            it('removes the spaces for period', () => {
-                expect(applyRegexReplacements(rules, 'This sentence has some space , before period  . Hello')).toEqual(
-                    'This sentence has some space, before period. Hello',
-                );
-            });
-
-            it('removes the spaces for question mark', () => {
-                expect(applyRegexReplacements(rules, 'This sentence has some space before period  ؟ Hello')).toEqual(
-                    'This sentence has some space before period؟ Hello',
-                );
-
-                expect(applyRegexReplacements(rules, 'الإسلام أم الكفر ؟')).toEqual('الإسلام أم الكفر؟');
-            });
-
-            it('removes the spaces for exclamation mark', () => {
-                expect(applyRegexReplacements(rules, 'This sentence has some space before period  ! Hello')).toEqual(
-                    'This sentence has some space before period! Hello',
-                );
-            });
-
-            it('removes the spaces for semicolon', () => {
-                expect(applyRegexReplacements(rules, 'ومن قال: (لا أعمل بحديث إلا إن أخذ به إمامي) ؛')).toEqual(
-                    'ومن قال: (لا أعمل بحديث إلا إن أخذ به إمامي)؛',
-                );
-            });
-
-            it('removes the spaces for comma', () => {
-                expect(applyRegexReplacements(rules, 'This sentence has some space before period  ، Hello')).toEqual(
-                    'This sentence has some space before period، Hello',
-                );
-            });
-
-            it('no-op', () => {
-                expect(applyRegexReplacements(rules, 'this is')).toEqual('this is');
-            });
-        });
-
-        describe('reduceSpaceBetween part pages', () => {
-            it('clean spaces between reference', () => {
-                rules = compileRegexPatterns([
-                    {
-                        flags: 'g',
-                        pattern: '(\\d+)\\s?/\\s?(\\d+)',
-                        replacement: '$1/$2',
-                    },
-                ]);
-
-                expect(applyRegexReplacements(rules, 'this is 127 / 11 with 127 /2 and 122 /3 and 22/1')).toEqual(
-                    'this is 127/11 with 127/2 and 122/3 and 22/1',
-                );
-            });
-        });
-
-        describe('reduceSpaces', () => {
-            beforeEach(() => {
-                rules = compileRegexPatterns([
-                    {
-                        flags: 'g',
-                        pattern: '  +',
-                        replacement: ' ',
-                    },
-                ]);
-            });
-
-            it('removes the spaces', () => {
-                expect(applyRegexReplacements(rules, 'This has    many spaces\n\nNext line')).toEqual(
-                    'This has many spaces\n\nNext line',
-                );
-            });
-
-            it('no-op', () => {
-                expect(applyRegexReplacements(rules, 'this is')).toEqual('this is');
-            });
-        });
-
-        describe('cleanMultilineSpaces', () => {
-            beforeEach(() => {
-                rules = compileRegexPatterns([
-                    {
-                        flags: 'gm',
-                        pattern: '^ +| +$',
-                        replacement: '',
-                    },
-                ]);
-            });
-
-            it('removes the spaces', () => {
-                expect(applyRegexReplacements(rules, 'This has    \nmany spaces  \n\nNext line')).toEqual(
-                    'This has\nmany spaces\n\nNext line',
-                );
-            });
-
-            it('no-op', () => {
-                expect(applyRegexReplacements(rules, 'this is')).toEqual('this is');
-            });
-        });
-
-        describe('condenseMultilines', () => {
-            beforeEach(() => {
-                rules = compileRegexPatterns([
-                    {
-                        flags: 'g',
-                        pattern: '\n\\s*\n',
-                        replacement: '\n',
-                    },
-                ]);
-            });
-
-            it('should remove the multiple line breaks', () => {
-                expect(applyRegexReplacements(rules, 'This\n\nis\n\n\nsome\nlines')).toEqual('This\nis\nsome\nlines');
-            });
-        });
-
-        describe('fixSalutations', () => {
-            beforeEach(() => {
-                rules = compileRegexPatterns([
-                    {
-                        flags: 'gi',
-                        pattern:
-                            '\\(peace be upon him\\)|(Messenger of (Allah|Allāh)|Messenger|Prophet|Mu[hḥ]ammad) *\\(s[^)]*m\\)*',
-                        replacement: '$1 ﷺ',
-                    },
-                    {
-                        flags: 'g',
-                        pattern: ',\\s*ﷺ\\s*,',
-                        replacement: ' ﷺ',
-                    },
-                ]);
-            });
-
-            it('Messenger of Allah (*)', () => {
-                expect(
-                    applyRegexReplacements(rules, 'Then the Messenger of Allah (sallahu alayhi wasallam) said'),
-                ).toEqual('Then the Messenger of Allah ﷺ said');
-            });
-
-            it('Messenger (*)', () => {
-                expect(applyRegexReplacements(rules, 'Then the Messenger (sallahu alayhi wasallam) said')).toEqual(
-                    'Then the Messenger ﷺ said',
-                );
-            });
-
-            it('Prophet (*)', () => {
-                expect(applyRegexReplacements(rules, 'Then the Prophet (sallahu alayhi wasallam) said')).toEqual(
-                    'Then the Prophet ﷺ said',
-                );
-            });
-
-            it('Muhammad (*)', () => {
-                expect(applyRegexReplacements(rules, 'Then Muhammad (sallahu alayhi wasallam) said')).toEqual(
-                    'Then Muhammad ﷺ said',
-                );
-            });
-
-            it('Muḥammad (*)', () => {
-                expect(applyRegexReplacements(rules, 'Then Muḥammad (sallahu alayhi wasallam) said')).toEqual(
-                    'Then Muḥammad ﷺ said',
-                );
-            });
-
-            it('Must start with s', () => {
-                expect(applyRegexReplacements(rules, 'Then Muḥammad (xsallahu alayhi wasallam) said')).toEqual(
-                    'Then Muḥammad (xsallahu alayhi wasallam) said',
-                );
-            });
-
-            it('Must end with m', () => {
-                expect(applyRegexReplacements(rules, 'Then Muḥammad (sallahu alayhi wasalla) said')).toEqual(
-                    'Then Muḥammad (sallahu alayhi wasalla) said',
+                expect(actual).toEqual(
+                    'al-Bukhārī went to the store with al-Shawkānī. Then al-Shawkānī and al-Bukhārī went home, except al-Shawkānī went to sleep.',
                 );
             });
         });
