@@ -2,7 +2,7 @@ import { h } from 'preact';
 import { useState } from 'preact/hooks';
 import { buildTrie, searchAndReplace } from 'trie-rules';
 import './app.css'; // This line should be at the top of your file
-
+import packageInfo from '../package.json';
 
 const DEFAULT_RULES = JSON.stringify([
   {
@@ -38,7 +38,7 @@ export function App() {
 
   return (
     <div>
-      <h1>Trie-Rules Demo</h1>
+      <h1>Trie-Rules v{packageInfo.dependencies['trie-rules']} Demo</h1>
       <div>
         <textarea
           value={rules}
