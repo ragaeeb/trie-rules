@@ -1,0 +1,72 @@
+/* Reset some basic elements */
+*, *:before, *:after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Apply a basic font */
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f4f4f4;
+  padding: 20px;
+}
+
+/* Center the application */
+#app {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Style the header */
+h1 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Style the text areas */
+textarea {
+  width: calc(100% - 40px); /* Subtracting the total horizontal padding */
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-height: 150px; /* Or any other height */
+  resize: vertical; /* Allow only vertical resizing */
+}
+
+/* Style the result textarea differently */
+textarea[readonly] {
+  background-color: #f9f9f9;
+}
+
+/* Style the button */
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  background-color: #5cb85c;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+button:hover {
+  background-color: #4cae4c;
+}
+
+/* Add space at the bottom of the app for better layout */
+#app {
+  margin-bottom: 40px;
+}
+
+.textarea-error {
+  border: 2px solid red;
+}
