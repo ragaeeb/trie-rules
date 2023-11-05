@@ -34,7 +34,7 @@
     "trie"
   ],
   "author": "Ragaeeb Haq",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "devDependencies": {
     "@jest/globals": "30.0.0-alpha.1",
     "@semantic-release/changelog": "6.0.3",

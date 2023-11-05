@@ -14,9 +14,16 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - name: Define Function
+              run: |
+                  gh_pr_up() {
+                    gh pr create $* || gh pr edit $*
+                  }
+                  echo "function gh_pr_up() { gh pr create \$* || gh pr edit \$* }" >> $GITHUB_ENV
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             - name: Create Pull Request
               run: |
-                  gh_pr_up() { gh pr create $* || gh pr edit $* }
                   gh_pr_up --title "${{ github.event.commits[0].message }}" --milestone 'next' --assignee 'ragaeeb' --draft false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
