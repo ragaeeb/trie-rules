@@ -15,7 +15,6 @@
 # Introduction
 
 [![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295)
-![David](https://img.shields.io/david/ragaeeb/trie-rules)
 ![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules)
 ![npm](https://img.shields.io/npm/v/trie-rules)
 ![npm](https://img.shields.io/npm/dm/trie-rules)
