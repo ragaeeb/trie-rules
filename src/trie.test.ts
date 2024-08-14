@@ -1,10 +1,11 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
+import { Rule, TrieNode } from './types';
 
 describe('trie', () => {
-    let rules = [];
-    let trie;
+    let rules: Rule[] = [];
+    let trie: TrieNode;
 
     describe('containsSource', () => {
         beforeAll(() => {
