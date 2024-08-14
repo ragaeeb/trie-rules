@@ -614,6 +614,45 @@ describe('trie', () => {
             });
         });
 
+        it('should handle apostrophes', () => {
+            rules = [
+                {
+                    sources: ['Musa', 'Mûsā', 'Moosaa', 'Moosa', 'Moses', 'Mūsā', 'Mūsa', 'Moussa'],
+                    target: 'Mūsá',
+                    options: {
+                        match: 'whole',
+                    },
+                },
+                {
+                    sources: ['Mus‘ab', 'Musab', 'Mus’ab', "Mus'ab"],
+                    target: 'Muṣʿab',
+                    options: {
+                        match: 'whole',
+                    },
+                },
+            ];
+
+            trie = buildTrie(rules);
+
+            expect(searchAndReplace(trie, `Musa'ab is here`)).toEqual(`Musa'ab is here`);
+        });
+
+        it('should handle ʿalá', () => {
+            rules = [
+                {
+                    sources: ['Ala', 'ala', 'alaa'],
+                    target: 'ʿalá',
+                    options: {
+                        match: 'whole',
+                    },
+                },
+            ];
+
+            trie = buildTrie(rules);
+
+            expect(searchAndReplace(trie, `ḥaṣala`)).toEqual(`ḥaṣala`);
+        });
+
         describe('confirm', () => {
             beforeEach(() => {
                 rules = [

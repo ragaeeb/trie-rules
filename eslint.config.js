@@ -8,7 +8,7 @@ export default [
     {
         files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'],
         languageOptions: {
-            ecmaVersion: 2023,
+            ecmaVersion: 'latest',
             sourceType: 'module',
             globals: {
                 Atomics: 'readonly',

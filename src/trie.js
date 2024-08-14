@@ -1,4 +1,4 @@
-const WORD_BOUNDARY = /[a-zA-ZāáḏḍēġḥīōṭūʿʾĀḌḎĒĠṬḤĪŌŪʿʾ]/;
+const WORD_BOUNDARY = /[a-zA-ZāáḏḍēġḥṣīōṭūĀḌḎĒĠṬḤĪṢŌŪʿʾ']/;
 
 /**
  * Builds a trie based on the provided rules.
