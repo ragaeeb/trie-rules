@@ -115,6 +115,14 @@ const isValidMatch = (prevChar, nextChar, options, text, matchStartIndex) => {
     return true;
 };
 
+const isConsidered = (ruleOptions, callback) => {
+    if (ruleOptions?.confirm && callback) {
+        return callback(ruleOptions.confirm);
+    }
+
+    return true;
+};
+
 /**
  * Searches for and replaces text based on the provided trie.
  *
@@ -122,7 +130,7 @@ const isValidMatch = (prevChar, nextChar, options, text, matchStartIndex) => {
  * @param {string} text - The text to search and replace within.
  * @returns {string} - The modified text.
  */
-export const searchAndReplace = (trie, text) => {
+export const searchAndReplace = (trie, text, options = {}) => {
     let result = '';
     let i = 0;
 
@@ -146,7 +154,10 @@ export const searchAndReplace = (trie, text) => {
             const { index, node: potentialNode } = potentialMatches[k];
             const prevChar = text[i - 1] || '';
             const nextChar = text[index + 1] || ''; // +1 to get the character immediately after the match
-            if (isValidMatch(prevChar, nextChar, potentialNode.options, text, i)) {
+            if (
+                isValidMatch(prevChar, nextChar, potentialNode.options, text, i) &&
+                isConsidered(potentialNode.options, options.confirmCallback)
+            ) {
                 longestValidMatch = potentialNode;
                 j = index + 1; // +1 to move to the character immediately after the match
                 break;

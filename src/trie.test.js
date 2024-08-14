@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from '@jest/globals';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
 
@@ -606,11 +606,75 @@ describe('trie', () => {
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(
                     trie,
-                    'Bukhari went to the store with ash-Shawkani. Then Shawkaanee and al-Bukharee went home, except Shawkaani went to sleep.',
+                    'Bukhari went to the store with ash-Shawkani. Then Shawkaanee and al-Bukharee went home, except Shawkaani went to sleep and al-Shawkānī should be untouched.',
                 );
                 expect(actual).toEqual(
-                    'al-Bukhārī went to the store with al-Shawkānī. Then al-Shawkānī and al-Bukhārī went home, except al-Shawkānī went to sleep.',
+                    'al-Bukhārī went to the store with al-Shawkānī. Then al-Shawkānī and al-Bukhārī went home, except al-Shawkānī went to sleep and al-Shawkānī should be untouched.',
                 );
+            });
+        });
+
+        describe('confirm', () => {
+            beforeEach(() => {
+                rules = [
+                    {
+                        target: 'Mālik',
+                        sources: ['Maalik', 'Malik'],
+                        options: { match: 'whole', confirm: { anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] } },
+                    },
+                ];
+            });
+
+            it('should trigger a confirmation', () => {
+                const confirmCallback = vi.fn(() => true);
+                trie = buildTrie(rules);
+
+                searchAndReplace(trie, 'Maalik went home.', { confirmCallback });
+                expect(confirmCallback).toHaveBeenCalledTimes(1);
+                expect(confirmCallback).toHaveBeenCalledWith({ anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] });
+            });
+
+            it('should not trigger a confirmation if the rule does not include it', () => {
+                const confirmCallback = vi.fn(() => true);
+
+                rules[0].options = { match: 'whole' };
+                trie = buildTrie(rules);
+
+                searchAndReplace(trie, 'Maalik went home.', { confirmCallback });
+                expect(confirmCallback).not.toHaveBeenCalled();
+            });
+
+            it('should still make the replacement if the callback is not passed in', () => {
+                const confirmCallback = vi.fn(() => true);
+                trie = buildTrie(rules);
+
+                const actual = searchAndReplace(trie, 'Maalik went home.');
+                expect(confirmCallback).not.toHaveBeenCalled();
+                expect(actual).toEqual('Mālik went home.');
+            });
+
+            it('should replace if the callback resolves to true', () => {
+                const text = 'أَخْبَرَنَا مَالِكٌ';
+                trie = buildTrie(rules);
+
+                const actual = searchAndReplace(trie, 'Maalik went home.', {
+                    confirmCallback: (confirmOptions) => {
+                        return confirmOptions.anyOf.some((word) => text.includes(word));
+                    },
+                });
+                expect(actual).toEqual('Mālik went home.');
+            });
+
+            it('should not replace if the callback resolves to false', () => {
+                const text = 'أَخْبَرَنَا رَجُلٌ';
+                trie = buildTrie(rules);
+
+                const actual = searchAndReplace(trie, 'Maalik went home.', {
+                    confirmCallback: (confirmOptions) => {
+                        return confirmOptions.anyOf.some((word) => text.includes(word));
+                    },
+                });
+                expect(actual).toEqual('Maalik went home.');
             });
         });
     });
