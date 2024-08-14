@@ -1,10 +1,11 @@
-import { beforeAll, describe, expect, it } from '@jest/globals';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
+import { Rule, TrieNode } from './types';
 
 describe('trie', () => {
-    let rules = [];
-    let trie;
+    let rules: Rule[] = [];
+    let trie: TrieNode;
 
     describe('containsSource', () => {
         beforeAll(() => {
@@ -606,11 +607,114 @@ describe('trie', () => {
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(
                     trie,
-                    'Bukhari went to the store with ash-Shawkani. Then Shawkaanee and al-Bukharee went home, except Shawkaani went to sleep.',
+                    'Bukhari went to the store with ash-Shawkani. Then Shawkaanee and al-Bukharee went home, except Shawkaani went to sleep and al-Shawkānī should be untouched.',
                 );
                 expect(actual).toEqual(
-                    'al-Bukhārī went to the store with al-Shawkānī. Then al-Shawkānī and al-Bukhārī went home, except al-Shawkānī went to sleep.',
+                    'al-Bukhārī went to the store with al-Shawkānī. Then al-Shawkānī and al-Bukhārī went home, except al-Shawkānī went to sleep and al-Shawkānī should be untouched.',
                 );
+            });
+        });
+
+        it('should handle apostrophes', () => {
+            rules = [
+                {
+                    sources: ['Musa', 'Mûsā', 'Moosaa', 'Moosa', 'Moses', 'Mūsā', 'Mūsa', 'Moussa'],
+                    target: 'Mūsá',
+                    options: {
+                        match: 'whole',
+                    },
+                },
+                {
+                    sources: ['Mus‘ab', 'Musab', 'Mus’ab', "Mus'ab"],
+                    target: 'Muṣʿab',
+                    options: {
+                        match: 'whole',
+                    },
+                },
+            ];
+
+            trie = buildTrie(rules);
+
+            expect(searchAndReplace(trie, `Musa'ab is here`)).toEqual(`Musa'ab is here`);
+        });
+
+        it('should handle ʿalá', () => {
+            rules = [
+                {
+                    sources: ['Ala', 'ala', 'alaa'],
+                    target: 'ʿalá',
+                    options: {
+                        match: 'whole',
+                    },
+                },
+            ];
+
+            trie = buildTrie(rules);
+
+            expect(searchAndReplace(trie, `ḥaṣala`)).toEqual(`ḥaṣala`);
+        });
+
+        describe('confirm', () => {
+            beforeEach(() => {
+                rules = [
+                    {
+                        target: 'Mālik',
+                        sources: ['Maalik', 'Malik'],
+                        options: { match: 'whole', confirm: { anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] } },
+                    },
+                ];
+            });
+
+            it('should trigger a confirmation', () => {
+                const confirmCallback = vi.fn(() => true);
+                trie = buildTrie(rules);
+
+                searchAndReplace(trie, 'Maalik went home.', { confirmCallback });
+                expect(confirmCallback).toHaveBeenCalledTimes(1);
+                expect(confirmCallback).toHaveBeenCalledWith({ anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] });
+            });
+
+            it('should not trigger a confirmation if the rule does not include it', () => {
+                const confirmCallback = vi.fn(() => true);
+
+                rules[0].options = { match: 'whole' };
+                trie = buildTrie(rules);
+
+                searchAndReplace(trie, 'Maalik went home.', { confirmCallback });
+                expect(confirmCallback).not.toHaveBeenCalled();
+            });
+
+            it('should still make the replacement if the callback is not passed in', () => {
+                const confirmCallback = vi.fn(() => true);
+                trie = buildTrie(rules);
+
+                const actual = searchAndReplace(trie, 'Maalik went home.');
+                expect(confirmCallback).not.toHaveBeenCalled();
+                expect(actual).toEqual('Mālik went home.');
+            });
+
+            it('should replace if the callback resolves to true', () => {
+                const text = 'أَخْبَرَنَا مَالِكٌ';
+                trie = buildTrie(rules);
+
+                const actual = searchAndReplace(trie, 'Maalik went home.', {
+                    confirmCallback: (confirmOptions) => {
+                        return confirmOptions.anyOf.some((word) => text.includes(word));
+                    },
+                });
+                expect(actual).toEqual('Mālik went home.');
+            });
+
+            it('should not replace if the callback resolves to false', () => {
+                const text = 'أَخْبَرَنَا رَجُلٌ';
+                trie = buildTrie(rules);
+
+                const actual = searchAndReplace(trie, 'Maalik went home.', {
+                    confirmCallback: (confirmOptions) => {
+                        return confirmOptions.anyOf.some((word) => text.includes(word));
+                    },
+                });
+                expect(actual).toEqual('Maalik went home.');
             });
         });
     });
