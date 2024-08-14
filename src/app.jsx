@@ -3,25 +3,14 @@ import { useState } from "preact/hooks";
 import { buildTrie, searchAndReplace } from "trie-rules";
 import "./app.css"; // This line should be at the top of your file
 import packageInfo from "../package.json";
-
-const DEFAULT_RULES = JSON.stringify(
-  [
-    {
-      target: "Bukhārī",
-      sources: ["Bukhari", "Bukhaaree"],
-      options: { prefix: "al-", match: "whole" },
-    },
-    { target: "Qurʾān", sources: ["Quran", "Quraan"] },
-  ],
-  null,
-  2
-);
+import defaultRules from "./defaultRules.json";
+import defaultText from "./defaultText.txt?raw";
 
 export function App() {
-  const [rules, setRules] = useState(DEFAULT_RULES);
-  const [text, setText] = useState(
-    "Bukhari and Muslim are the most authentic books we have after the Quran."
+  const [rules, setRules] = useState(
+    JSON.stringify(defaultRules.rules, null, 2)
   );
+  const [text, setText] = useState(defaultText);
 
   const handleRulesChange = (event) => {
     setRules(event.target.value);

@@ -1,0 +1,35 @@
+{
+  "rules": [
+    {
+      "target": "Bukhārī",
+      "sources": ["Bukhari", "Bukhaaree"],
+      "options": {
+        "prefix": "al-",
+        "match": "whole"
+      }
+    },
+    {
+      "target": "Qurʾān",
+      "sources": ["Quran", "Quraan"]
+    },
+    {
+      "sources": ["Muwatta"],
+      "target": "Muwaṭṭaʾ"
+    },
+    {
+      "sources": ["Imam", "Imaam", "imam", "imaam"],
+      "target": "Imām",
+      "options": {
+        "match": "whole"
+      }
+    },
+    {
+      "target": "Mālik",
+      "sources": ["Maalik", "Malik"],
+      "options": {
+        "match": "whole",
+        "confirm": { "anyOf": ["مالك", "مَالِكٍ", "مَالِكٌ"] }
+      }
+    }
+  ]
+}
