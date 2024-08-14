@@ -16,7 +16,6 @@ jobs:
             - uses: actions/checkout@v4
             - name: Create Pull Request
               run: |
-                  gh pr create --title "${{ github.event.commits[0].message }}" --milestone 'next' --draft 'false' || \
-                  gh pr edit --add-assignee 'ragaeeb'
+                  gh pr create --title "${{ github.event.commits[0].message }}" --milestone 'next' --draft --fill-verbose --assignee 'ragaeeb'
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
