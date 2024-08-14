@@ -16,6 +16,6 @@ jobs:
             - uses: actions/checkout@v4
             - name: Create Pull Request
               run: |
-                  gh pr create --title --milestone 'next' --draft --fill-first --assignee 'ragaeeb'
+                  gh pr create --title --milestone "next" --draft --fill-first --assignee "ragaeeb"
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
