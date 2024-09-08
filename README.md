@@ -14,12 +14,7 @@
 
 # Introduction
 
-[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295)
-![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules)
-![npm](https://img.shields.io/npm/v/trie-rules)
-![npm](https://img.shields.io/npm/dm/trie-rules)
-![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules)
-![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social)
+[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295) ![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules) ![npm](https://img.shields.io/npm/v/trie-rules) ![npm](https://img.shields.io/npm/dm/trie-rules) ![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules) ![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social) ![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/tafrigh) [![codecov](https://codecov.io/github/ragaeeb/tafrigh/graph/badge.svg?token=9DWYN1ETDS)](https://codecov.io/github/ragaeeb/tafrigh)
 
 The `trie-rules` project is an efficient search and replace algorithm that performs replacements on any given text based on a predefined rule set.
 
@@ -171,6 +166,39 @@ const isSourceInTrie = containsSource(trie, 'example');
 console.log(isSourceInTrie); // Outputs true if 'example' is a source in the trie, false otherwise.
 ```
 
+## `confirmCallback` Feature
+
+The `confirmCallback` feature in `searchAndReplace` function adds a confirmation step before making a replacement. It uses the `confirmCallback` provided by the user to decide whether the replacement should proceed.
+
+### Functionality:
+
+When the `searchAndReplace` function encounters a source string that matches a rule with a `confirm` option, it will invoke the `confirmCallback` with an object containing the rule's `anyOf` array. The callback should return `true` to allow the replacement, or `false` to prevent it.
+
+The callback is crucial for situations where context-sensitive replacements are needed, such as matching transliterations based on the presence of specific Arabic phrases in the surrounding text. If the callback returns false, or if it is not provided, the function defaults to making the replacement based on the standard rule set.
+
+### Edge Case Handling:
+
+If the `confirmCallback` is not provided, the replacement will proceed as normal without confirmation. This ensures backward compatibility and allows for optional usage of the feature.
+
+### Example Usage:
+
+````js
+const rules = [
+    {
+        target: 'Mālik',
+        sources: ['Maalik', 'Malik'],
+        options: { match: 'whole', confirm: { anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] } },
+    },
+];
+
+const trie = buildTrie(rules);
+const text = 'Maalik went home.';
+const confirmCallback = options => options.anyOf.some(word => text.includes(word));
+
+const replacedText = searchAndReplace(trie, text, { confirmCallback });
+console.log(replacedText); // Outputs: 'Mālik went home.'
+
+
 # Performance
 
 ## Background History
@@ -258,7 +286,7 @@ describe('applyRules', () => {
         expect(applyRules(dictionary, 'Al Imam')).toEqual('al-Imam');
     });
 });
-```
+````
 
 However this was very expensive to perform and it was increasingly complex to support custom rules as look-aheads and lookbacks can become more and more inefficient.
 

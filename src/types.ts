@@ -7,20 +7,20 @@ export interface ConfirmCallback {
 }
 
 export interface RuleOptions {
+    confirm?: ConfirmOptions;
     match?: 'whole' | 'alone';
     prefix?: string;
-    confirm?: ConfirmOptions;
 }
 
 export interface Rule {
+    options?: RuleOptions;
     sources: string[];
     target: string;
-    options?: RuleOptions;
 }
 
 export interface TrieNode {
     [key: string]: TrieNode | boolean | string | RuleOptions | undefined;
     isEndOfWord?: boolean;
-    target?: string;
     options?: RuleOptions;
+    target?: string;
 }
