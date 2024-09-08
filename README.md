@@ -8,7 +8,7 @@
         -   [searchAndReplace](#searchandreplace)
         -   [containsTarget](#containstarget)
         -   [containsSource](#containssource)
-        -   [confirmCallback](#confirmCallback)
+        -   [confirmCallback](#confirmcallback)
 -   [Performance](#performance)
     -   [Background History](#background-history)
     -   [Advantages of trie-based search over regex](#advantages-of-trie-based-search-over-regex)
