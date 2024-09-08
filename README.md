@@ -15,7 +15,7 @@
 
 # Introduction
 
-[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295) ![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules) ![npm](https://img.shields.io/npm/v/trie-rules) ![npm](https://img.shields.io/npm/dm/trie-rules) ![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules) ![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social) ![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/tafrigh) [![codecov](https://codecov.io/github/ragaeeb/tafrigh/graph/badge.svg?token=9DWYN1ETDS)](https://codecov.io/github/ragaeeb/tafrigh)
+[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295) ![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules) ![npm](https://img.shields.io/npm/v/trie-rules) ![npm](https://img.shields.io/npm/dm/trie-rules) ![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules) ![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social) ![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/tafrigh) [![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules)
 
 The `trie-rules` project is an efficient search and replace algorithm that performs replacements on any given text based on a predefined rule set.
 
