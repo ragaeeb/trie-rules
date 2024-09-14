@@ -568,14 +568,14 @@ describe('trie', () => {
 
         describe('searchAndReplace with prefix option', () => {
             it('should add the prefix if not present', () => {
-                rules = [{ target: 'Bukhārī', options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari'] }];
+                rules = [{ options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari'], target: 'Bukhārī' }];
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(trie, 'I read Bukhari yesterday.');
                 expect(actual).toEqual('I read al-Bukhārī yesterday.');
             });
 
             it('should not add the prefix if it is already present', () => {
-                rules = [{ target: 'Bukhārī', options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari'] }];
+                rules = [{ options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari'], target: 'Bukhārī' }];
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(trie, 'I read al-Bukhari yesterday.');
                 expect(actual).toEqual('I read al-Bukhārī yesterday.');
@@ -583,8 +583,8 @@ describe('trie', () => {
 
             it('should handle multiple rules and cases where prefix is not needed', () => {
                 rules = [
-                    { target: 'Bukhārī', options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari', 'Bukharee'] },
-                    { target: 'Muslim', options: { match: 'whole' }, sources: ['Muslim'] },
+                    { options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari', 'Bukharee'], target: 'Bukhārī' },
+                    { options: { match: 'whole' }, sources: ['Muslim'], target: 'Muslim' },
                 ];
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(trie, 'Bukharee and Muslim are both hadith books.');
@@ -594,14 +594,14 @@ describe('trie', () => {
             it('should handle multiple variations', () => {
                 rules = [
                     {
-                        target: 'Bukhārī',
                         options: { match: 'whole', prefix: 'al-' },
                         sources: ['Bukhari', 'Bukharee', 'Bukhaaree'],
+                        target: 'Bukhārī',
                     },
                     {
-                        target: 'Shawkānī',
                         options: { match: 'whole', prefix: 'al-' },
                         sources: ['Shawkani', 'Shawkaanee', 'Shawkaani', 'ash-Shawkani'],
+                        target: 'Shawkānī',
                     },
                 ];
                 trie = buildTrie(rules);
@@ -618,18 +618,18 @@ describe('trie', () => {
         it('should handle apostrophes', () => {
             rules = [
                 {
+                    options: {
+                        match: 'whole',
+                    },
                     sources: ['Musa', 'Mûsā', 'Moosaa', 'Moosa', 'Moses', 'Mūsā', 'Mūsa', 'Moussa'],
                     target: 'Mūsá',
-                    options: {
-                        match: 'whole',
-                    },
                 },
                 {
-                    sources: ['Mus‘ab', 'Musab', 'Mus’ab', "Mus'ab"],
-                    target: 'Muṣʿab',
                     options: {
                         match: 'whole',
                     },
+                    sources: ['Mus‘ab', 'Musab', 'Mus’ab', "Mus'ab"],
+                    target: 'Muṣʿab',
                 },
             ];
 
@@ -641,11 +641,11 @@ describe('trie', () => {
         it('should handle ʿalá', () => {
             rules = [
                 {
-                    sources: ['Ala', 'ala', 'alaa'],
-                    target: 'ʿalá',
                     options: {
                         match: 'whole',
                     },
+                    sources: ['Ala', 'ala', 'alaa'],
+                    target: 'ʿalá',
                 },
             ];
 
@@ -658,9 +658,9 @@ describe('trie', () => {
             beforeEach(() => {
                 rules = [
                     {
-                        target: 'Mālik',
+                        options: { confirm: { anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] }, match: 'whole' },
                         sources: ['Maalik', 'Malik'],
-                        options: { match: 'whole', confirm: { anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] } },
+                        target: 'Mālik',
                     },
                 ];
             });

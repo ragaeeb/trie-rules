@@ -8,7 +8,7 @@ export interface ConfirmCallback {
 
 export interface RuleOptions {
     confirm?: ConfirmOptions;
-    match?: 'whole' | 'alone';
+    match?: 'alone' | 'whole';
     prefix?: string;
 }
 
@@ -19,7 +19,7 @@ export interface Rule {
 }
 
 export interface TrieNode {
-    [key: string]: TrieNode | boolean | string | RuleOptions | undefined;
+    [key: string]: boolean | RuleOptions | string | TrieNode | undefined;
     isEndOfWord?: boolean;
     options?: RuleOptions;
     target?: string;
