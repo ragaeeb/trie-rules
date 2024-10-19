@@ -6,9 +6,14 @@ export interface ConfirmCallback {
     (confirmOptions: ConfirmOptions): boolean;
 }
 
+export enum MatchType {
+    Alone = 'alone',
+    Whole = 'whole',
+}
+
 export interface RuleOptions {
     confirm?: ConfirmOptions;
-    match?: 'alone' | 'whole';
+    match?: MatchType;
     prefix?: string;
 }
 

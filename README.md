@@ -15,7 +15,7 @@
 
 # Introduction
 
-[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295) ![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules) ![npm](https://img.shields.io/npm/v/trie-rules) ![npm](https://img.shields.io/npm/dm/trie-rules) ![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules) ![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social) ![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/trie-rules) [![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules) [![Size](https://deno.bundlejs.com/badge?q=trie-rules@2.0.1&badge=detailed)](https://bundlejs.com/?q=trie-rules%402.0.1) ![typescript](https://badgen.net/badge/icon/typescript?icon=typescript&label&color=blue)
+[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295) ![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules) ![npm](https://img.shields.io/npm/v/trie-rules) ![npm](https://img.shields.io/npm/dm/trie-rules) ![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules) ![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social) ![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/trie-rules) [![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules) [![Size](https://deno.bundlejs.com/badge?q=trie-rules@2.0.2&badge=detailed)](https://bundlejs.com/?q=trie-rules%402.0.2) ![typescript](https://badgen.net/badge/icon/typescript?icon=typescript&label&color=blue)
 
 The `trie-rules` project is an efficient search and replace algorithm that performs replacements on any given text based on a predefined rule set.
 
@@ -30,7 +30,11 @@ This guide explains how to use the exported functions from `trie-rules`.
 ## Installation
 
 ```bash
-npm i trie-rules
+npm install trie-rules
+# or
+yarn add trie-rules
+# or
+pnpm i trie-rules
 ```
 
 ## `buildTrie(rules: Rule[]): TrieNode`
@@ -347,3 +351,16 @@ However, if we consider that each character leads to a potential match and we ha
 In the average and best-case scenarios, where the text doesn't consist of repeating patterns and not every character leads to a match, the performance would be closer to \( O(l) \), since the trie structure allows for quick elimination of non-matching paths.
 
 In practice, the actual performance would depend on the specifics of the input data, such as the size and structure of the trie, and the distribution and frequency of potential matches in the text.
+
+## Performance
+
+We conducted benchmarks on core functions using [ESBench](https://esbench.vercel.app/). The following results reflect the average time per operation on real-world data sets.
+
+| Function           | Time per operation (ns) | Standard Deviation (ns) |
+| ------------------ | ----------------------- | ----------------------- |
+| `buildTrie`        | 2,806,141.04 ns         | 43,405.06 ns            |
+| `containsSource`   | 79.45 ns                | 0.37 ns                 |
+| `containsTarget`   | 76,540.27 ns            | 1,454.30 ns             |
+| `searchAndReplace` | 74,314.29 ns            | 1,428.50 ns             |
+
+These benchmarks were performed on a `Apple M2 Pro` with `32GB RAM` specifications, using the `rules.json` sample data.
