@@ -1,6 +1,6 @@
 import { ConfirmCallback, Rule, RuleOptions, TrieNode } from './types';
 
-const WORD_BOUNDARY = /[a-zA-ZāáḏḍēġḥṣīōṭūĀḌḎĒĠṬḤĪṢŌŪʿʾ']/;
+const WORD_BOUNDARY = /[a-zA-ZāáḏḍēġḥṣīōṭūĀḌḎĒĠṬḤĪṢŌŪʿʾ]/;
 
 /**
  * Builds a trie based on the provided rules.
@@ -79,22 +79,61 @@ export const containsTarget = (trie: TrieNode, text: string, options: { caseInse
     return false;
 };
 
+const isLetter = (char: string): boolean => {
+    return WORD_BOUNDARY.test(char);
+};
+
+/**
+ * Determines if a character at a given position is considered a word character.
+ * An apostrophe is considered a word character only if it's between letters.
+ */
+const isWordCharacterAt = (text: string, index: number): boolean => {
+    const char = text.charAt(index);
+    if (!char) return false;
+
+    if (isLetter(char)) {
+        return true;
+    }
+
+    if (char === "'") {
+        const prevChar = text.charAt(index - 1);
+        const nextChar = text.charAt(index + 1);
+        const nextNextChar = text.charAt(index + 2);
+
+        if (isLetter(prevChar) && isLetter(nextChar)) {
+            // Apostrophe between letters, could be part of the word
+            // Check if it's a possessive 's'
+            if (nextChar.toLowerCase() === 's' && !isLetter(nextNextChar)) {
+                // Apostrophe 's' is possessive, not part of the word
+                return false;
+            }
+            return true;
+        }
+    }
+
+    return false;
+};
+
 /**
  * Checks if a match is valid based on the provided options.
  * @returns {boolean} - True if the match is valid, false otherwise.
  */
 const isValidMatch = (
-    prevChar: string,
-    nextChar: string,
-    options: RuleOptions | undefined,
     text: string,
     matchStartIndex: number,
+    matchEndIndex: number,
+    options: RuleOptions | undefined,
 ): boolean => {
     if (options && options.match === 'whole') {
-        return !WORD_BOUNDARY.test(prevChar) && !WORD_BOUNDARY.test(nextChar);
+        const isPrevWordChar = isWordCharacterAt(text, matchStartIndex - 1);
+        const isNextWordChar = isWordCharacterAt(text, matchEndIndex);
+
+        return !isPrevWordChar && !isNextWordChar;
     }
 
     if (options?.match === 'alone') {
+        const prevChar = text.charAt(matchStartIndex - 1) || '';
+        const nextChar = text.charAt(matchEndIndex) || '';
         return /\s/.test(prevChar) && /\s/.test(nextChar);
     }
 
@@ -137,23 +176,20 @@ export const searchAndReplace = (
             node = node[text[j]] as TrieNode;
             j++;
             if (node.isEndOfWord) {
-                // Here, we use j - 1 to include the last character of the matched word
-                potentialMatches.push({ index: j - 1, node });
+                potentialMatches.push({ endIndex: j, node, startIndex: i });
             }
         }
 
         let longestValidMatch = null;
 
         for (let k = potentialMatches.length - 1; k >= 0; k--) {
-            const { index, node: potentialNode } = potentialMatches[k] as { index: number; node: TrieNode };
-            const prevChar = text[i - 1] || '';
-            const nextChar = text[index + 1] || ''; // +1 to get the character immediately after the match
+            const { endIndex, node: potentialNode, startIndex } = potentialMatches[k];
             if (
-                isValidMatch(prevChar, nextChar, potentialNode.options, text, i) &&
+                isValidMatch(text, startIndex, endIndex, potentialNode.options) &&
                 isConsidered(potentialNode.options, options.confirmCallback)
             ) {
                 longestValidMatch = potentialNode;
-                j = index + 1; // +1 to move to the character immediately after the match
+                j = endIndex;
                 break;
             }
         }

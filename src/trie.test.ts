@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
-import { Rule, TrieNode } from './types';
+import { MatchType, Rule, TrieNode } from './types';
 
 describe('trie', () => {
     let rules: Rule[] = [];
@@ -38,8 +38,8 @@ describe('trie', () => {
     describe('containsTarget', () => {
         beforeEach(() => {
             rules = [
-                { options: { match: 'whole' }, sources: ['ibn'], target: 'b.' },
-                { options: { match: 'whole' }, sources: ['ibn ‘Abbaas'], target: 'Ibn ʿAbbās' },
+                { options: { match: MatchType.Whole }, sources: ['ibn'], target: 'b.' },
+                { options: { match: MatchType.Whole }, sources: ['ibn ‘Abbaas'], target: 'Ibn ʿAbbās' },
             ];
 
             trie = buildTrie(rules);
@@ -76,12 +76,12 @@ describe('trie', () => {
                 },
                 { sources: ['RAA', 'رضي الله عنها'], target: '(may Allah be pleased with her)' },
                 {
-                    options: { match: 'alone' },
+                    options: { match: MatchType.Alone },
                     sources: ['RH'],
                     target: '(may Allah be pleased with him) reported that the Messenger ﷺ said:',
                 },
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ['ASWJ'],
                     target: 'Ahl al-Sunnah waʿl-Jamāʿah',
                 },
@@ -101,14 +101,14 @@ describe('trie', () => {
             rules = [
                 {
                     options: {
-                        match: 'whole',
+                        match: MatchType.Whole,
                     },
                     sources: ['ibn'],
                     target: 'b.',
                 },
                 {
                     options: {
-                        match: 'whole',
+                        match: MatchType.Whole,
                     },
                     sources: ['ibn ‘Abbaas'],
                     target: 'Ibn ʿAbbās',
@@ -125,14 +125,14 @@ describe('trie', () => {
             rules = [
                 {
                     options: {
-                        match: 'whole',
+                        match: MatchType.Whole,
                     },
                     sources: ['Awfa'],
                     target: 'Awfá',
                 },
                 {
                     options: {
-                        match: 'whole',
+                        match: MatchType.Whole,
                     },
                     sources: ['Awf'],
                     target: 'ʿAwf',
@@ -149,20 +149,20 @@ describe('trie', () => {
             rules = [
                 { sources: ['--'], target: '-' },
                 { sources: ['Abaan'], target: 'Abān' },
-                { options: { match: 'whole' }, sources: ['Abee', 'Abi', 'abi', 'abee'], target: 'Abī' },
-                { options: { match: 'whole' }, sources: ['Abu', 'Aboo', 'Abû', 'Abü'], target: 'Abū' },
+                { options: { match: MatchType.Whole }, sources: ['Abee', 'Abi', 'abi', 'abee'], target: 'Abī' },
+                { options: { match: MatchType.Whole }, sources: ['Abu', 'Aboo', 'Abû', 'Abü'], target: 'Abū' },
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ['akhi'],
                     target: 'akhī',
                 },
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ['Akhi'],
                     target: 'Akhī',
                 },
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ['Ayoob', 'Ayuub', 'Ayyoob', 'Ayyoub', 'Ayyub', 'Ayoub', 'Ayub', 'Ayyüb'],
                     target: 'Ayyūb',
                 },
@@ -179,22 +179,22 @@ describe('trie', () => {
 
         it('should replace with all the rules properly', () => {
             rules = [
-                { options: { match: 'whole' }, sources: ['Abul'], target: 'Abū al-' },
-                { options: { match: 'whole' }, sources: ['Adaab'], target: 'Adāb' },
-                { options: { match: 'whole' }, sources: ['adaab'], target: 'adāb' },
+                { options: { match: MatchType.Whole }, sources: ['Abul'], target: 'Abū al-' },
+                { options: { match: MatchType.Whole }, sources: ['Adaab'], target: 'Adāb' },
+                { options: { match: MatchType.Whole }, sources: ['adaab'], target: 'adāb' },
                 { sources: ['Ahl-ul-', 'Ahlul', 'Ahlus', 'ahl-ul-'], target: 'Ahl al-' },
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ['Ameen', 'ameen'],
                     target: 'Amīn',
                 },
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ["A'oodhu", "a'oodhu"],
                     target: 'Aʿūḏu',
                 },
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ['Adhaa', "Ad'haa", 'Adha'],
                     target: 'Aḍḥá',
                 },
@@ -213,7 +213,7 @@ describe('trie', () => {
         it('should only replace to Dhuhr when it is by itself', () => {
             rules = [
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ['Thuhr', 'Zuhr', 'thuhr', 'zuhr'],
                     target: 'Dhuhr',
                 },
@@ -236,7 +236,7 @@ describe('trie', () => {
         it('should only replace to ʿalá when the word is by itself', () => {
             rules = [
                 {
-                    options: { match: 'alone' },
+                    options: { match: MatchType.Alone },
                     sources: ['ala', 'Ala', 'alaa'],
                     target: 'ʿalá',
                 },
@@ -255,7 +255,7 @@ describe('trie', () => {
         it('should only replace Asr when it is by itself', () => {
             rules = [
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ['Asr', 'asr'],
                     target: 'ʿAṣr',
                 },
@@ -269,7 +269,7 @@ describe('trie', () => {
         it('should match the special character in the beginning of the string', () => {
             rules = [
                 {
-                    options: { match: 'whole' },
+                    options: { match: MatchType.Whole },
                     sources: ['Ṣafwan'],
                     target: 'Ṣafwān',
                 },
@@ -466,7 +466,7 @@ describe('trie', () => {
                 },
                 {
                     options: {
-                        match: 'whole',
+                        match: MatchType.Whole,
                     },
                     sources: ['fi'],
                     target: 'fī',
@@ -481,7 +481,7 @@ describe('trie', () => {
             rules = [
                 {
                     options: {
-                        match: 'whole',
+                        match: MatchType.Whole,
                     },
                     sources: ['Aas', 'Aass'],
                     target: 'ʿĀṣ',
@@ -568,14 +568,18 @@ describe('trie', () => {
 
         describe('searchAndReplace with prefix option', () => {
             it('should add the prefix if not present', () => {
-                rules = [{ options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari'], target: 'Bukhārī' }];
+                rules = [
+                    { options: { match: MatchType.Whole, prefix: 'al-' }, sources: ['Bukhari'], target: 'Bukhārī' },
+                ];
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(trie, 'I read Bukhari yesterday.');
                 expect(actual).toEqual('I read al-Bukhārī yesterday.');
             });
 
             it('should not add the prefix if it is already present', () => {
-                rules = [{ options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari'], target: 'Bukhārī' }];
+                rules = [
+                    { options: { match: MatchType.Whole, prefix: 'al-' }, sources: ['Bukhari'], target: 'Bukhārī' },
+                ];
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(trie, 'I read al-Bukhari yesterday.');
                 expect(actual).toEqual('I read al-Bukhārī yesterday.');
@@ -583,8 +587,12 @@ describe('trie', () => {
 
             it('should handle multiple rules and cases where prefix is not needed', () => {
                 rules = [
-                    { options: { match: 'whole', prefix: 'al-' }, sources: ['Bukhari', 'Bukharee'], target: 'Bukhārī' },
-                    { options: { match: 'whole' }, sources: ['Muslim'], target: 'Muslim' },
+                    {
+                        options: { match: MatchType.Whole, prefix: 'al-' },
+                        sources: ['Bukhari', 'Bukharee'],
+                        target: 'Bukhārī',
+                    },
+                    { options: { match: MatchType.Whole }, sources: ['Muslim'], target: 'Muslim' },
                 ];
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(trie, 'Bukharee and Muslim are both hadith books.');
@@ -594,12 +602,12 @@ describe('trie', () => {
             it('should handle multiple variations', () => {
                 rules = [
                     {
-                        options: { match: 'whole', prefix: 'al-' },
+                        options: { match: MatchType.Whole, prefix: 'al-' },
                         sources: ['Bukhari', 'Bukharee', 'Bukhaaree'],
                         target: 'Bukhārī',
                     },
                     {
-                        options: { match: 'whole', prefix: 'al-' },
+                        options: { match: MatchType.Whole, prefix: 'al-' },
                         sources: ['Shawkani', 'Shawkaanee', 'Shawkaani', 'ash-Shawkani'],
                         target: 'Shawkānī',
                     },
@@ -615,34 +623,11 @@ describe('trie', () => {
             });
         });
 
-        it('should handle apostrophes', () => {
-            rules = [
-                {
-                    options: {
-                        match: 'whole',
-                    },
-                    sources: ['Musa', 'Mûsā', 'Moosaa', 'Moosa', 'Moses', 'Mūsā', 'Mūsa', 'Moussa'],
-                    target: 'Mūsá',
-                },
-                {
-                    options: {
-                        match: 'whole',
-                    },
-                    sources: ['Mus‘ab', 'Musab', 'Mus’ab', "Mus'ab"],
-                    target: 'Muṣʿab',
-                },
-            ];
-
-            trie = buildTrie(rules);
-
-            expect(searchAndReplace(trie, `Musa'ab is here`)).toEqual(`Musa'ab is here`);
-        });
-
         it('should handle ʿalá', () => {
             rules = [
                 {
                     options: {
-                        match: 'whole',
+                        match: MatchType.Whole,
                     },
                     sources: ['Ala', 'ala', 'alaa'],
                     target: 'ʿalá',
@@ -654,11 +639,223 @@ describe('trie', () => {
             expect(searchAndReplace(trie, `ḥaṣala`)).toEqual(`ḥaṣala`);
         });
 
+        describe('apostrophes and possessive', () => {
+            it('should handle apostrophes', () => {
+                rules = [
+                    {
+                        options: {
+                            match: MatchType.Whole,
+                        },
+                        sources: ['Musa', 'Mûsā', 'Moosaa', 'Moosa', 'Moses', 'Mūsā', 'Mūsa', 'Moussa'],
+                        target: 'Mūsá',
+                    },
+                    {
+                        options: {
+                            match: MatchType.Whole,
+                        },
+                        sources: ['Mus‘ab', 'Musab', 'Mus’ab', "Mus'ab"],
+                        target: 'Muṣʿab',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `Musa'ab is here`)).toEqual(`Musa'ab is here`);
+            });
+
+            it('should handle the apostrophe with the whole word', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: [
+                            'Saaleh',
+                            'Saalih',
+                            'Salih',
+                            'S\u0101lih',
+                            'Saleh',
+                            'Sw\u0101li\u1e25',
+                            'Shalih',
+                            'S\u0101leh',
+                        ],
+                        target: '\u1e62\u0101li\u1e25',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `It is Salih's book`)).toEqual(`It is Ṣāliḥ's book`);
+            });
+
+            it('should handle transliterated words where apostrophe s is part of the word', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ["Ma'as", 'Maas'],
+                        target: 'Maʿās',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `He greeted me with Ma'as`)).toEqual(`He greeted me with Maʿās`);
+                expect(searchAndReplace(trie, `I learned about Ma'as today`)).toEqual(`I learned about Maʿās today`);
+            });
+
+            it('should correctly handle possessive apostrophe after transliterated word', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ['Ibrahim', 'Ebrahim'],
+                        target: 'Ibrāhīm',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `Ibrahim's book is new`)).toEqual(`Ibrāhīm's book is new`);
+                expect(searchAndReplace(trie, `Ebrahim's car`)).toEqual(`Ibrāhīm's car`);
+            });
+
+            it('should handle words ending with apostrophe followed by letters', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ["Sha'ban", 'Shaban'],
+                        target: 'Shaʿbān',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `The month of Sha'ban is important`)).toEqual(
+                    `The month of Shaʿbān is important`,
+                );
+                expect(searchAndReplace(trie, `He was born in Shaban`)).toEqual(`He was born in Shaʿbān`);
+            });
+
+            it('should handle words with multiple apostrophes', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ["Ka'ba", 'Kaaba'],
+                        target: 'Kaʿbah',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `They visited the Ka'ba's site`)).toEqual(
+                    `They visited the Kaʿbah's site`,
+                );
+                expect(searchAndReplace(trie, `The rituals of Kaaba are significant`)).toEqual(
+                    `The rituals of Kaʿbah are significant`,
+                );
+            });
+
+            it('should not replace partial matches within larger words', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ['Ali'],
+                        target: 'ʿAlī',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `The coalition was formed`)).toEqual(`The coalition was formed`);
+                expect(searchAndReplace(trie, `Alight the torch`)).toEqual(`Alight the torch`);
+            });
+
+            it('should handle words where apostrophe s is part of the transliterated word', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ['Nas'],
+                        target: 'Nass',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `The term Nas's meaning is clear`)).toEqual(
+                    `The term Nass's meaning is clear`,
+                );
+                expect(searchAndReplace(trie, `Understanding Nas is important`)).toEqual(
+                    `Understanding Nass is important`,
+                );
+                expect(searchAndReplace(trie, `Nas's`)).toEqual(`Nass's`);
+                expect(searchAndReplace(trie, `Nas's book`)).toEqual(`Nass's book`);
+            });
+
+            it('should correctly handle possessive apostrophe after words ending with s', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ['Moses'],
+                        target: 'Mūsá',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `Moses's staff was powerful`)).toEqual(`Mūsá's staff was powerful`);
+                expect(searchAndReplace(trie, `The teachings of Moses`)).toEqual(`The teachings of Mūsá`);
+            });
+
+            it('should not replace within contractions', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ['Amr'],
+                        target: 'ʿAmr',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `I'm ready to go`)).toEqual(`I'm ready to go`);
+                expect(searchAndReplace(trie, `Amr's decision`)).toEqual(`ʿAmr's decision`);
+            });
+
+            it('should handle words with apostrophes and hyphens', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ["al-Qur'an", 'al-Quran'],
+                        target: 'al-Qurʾān',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `The recitation of al-Qur'an is important`)).toEqual(
+                    `The recitation of al-Qurʾān is important`,
+                );
+                expect(searchAndReplace(trie, `Studying al-Quran's verses`)).toEqual(`Studying al-Qurʾān's verses`);
+            });
+
+            it('should handle words starting with an apostrophe', () => {
+                rules = [
+                    {
+                        options: { match: MatchType.Whole },
+                        sources: ["'Umar", 'Umar'],
+                        target: 'ʿUmar',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `'Umar's wisdom`)).toEqual(`ʿUmar's wisdom`);
+                expect(searchAndReplace(trie, `I spoke to Umar`)).toEqual(`I spoke to ʿUmar`);
+            });
+        });
+
         describe('confirm', () => {
             beforeEach(() => {
                 rules = [
                     {
-                        options: { confirm: { anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] }, match: 'whole' },
+                        options: { confirm: { anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] }, match: MatchType.Whole },
                         sources: ['Maalik', 'Malik'],
                         target: 'Mālik',
                     },
@@ -677,7 +874,7 @@ describe('trie', () => {
             it('should not trigger a confirmation if the rule does not include it', () => {
                 const confirmCallback = vi.fn(() => true);
 
-                rules[0].options = { match: 'whole' };
+                rules[0].options = { match: MatchType.Whole };
                 trie = buildTrie(rules);
 
                 searchAndReplace(trie, 'Maalik went home.', { confirmCallback });
