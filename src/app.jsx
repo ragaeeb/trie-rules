@@ -8,7 +8,7 @@ import defaultText from "./defaultText.txt?raw";
 
 export function App() {
   const [rules, setRules] = useState(
-    JSON.stringify(defaultRules.rules, null, 2)
+    JSON.stringify(defaultRules.searchReplaceRules, null, 2)
   );
   const [text, setText] = useState(defaultText);
 
@@ -24,7 +24,12 @@ export function App() {
     try {
       const parsedRules = JSON.parse(rules);
       const trie = buildTrie(parsedRules);
-      const replacedText = searchAndReplace(trie, text);
+      const replacedText = searchAndReplace(trie, text, {
+        confirmCallback: (options) => {
+          console.log("options", options);
+          return false;
+        },
+      });
       setText(replacedText);
     } catch (error) {
       alert("Error parsing rules or processing text: " + error.message);
