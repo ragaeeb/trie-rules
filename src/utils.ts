@@ -1,7 +1,6 @@
-// utils.ts
-import { ConfirmCallback, MatchType, RuleOptions } from './types';
+import { ClipStartPattern, ConfirmCallback, MatchType, RuleOptions } from './types';
 
-const APOSTROPHE_LIKE_CHARS = new Set(["'", '`', 'ʾ', 'ʿ', '‘', '’']);
+export const APOSTROPHE_LIKE_REGEX = /['’‘`ʾʿ]/;
 
 // Use Unicode property escape for letters (includes all letters)
 const LETTER_REGEX = /\p{L}/u;
@@ -11,7 +10,7 @@ export const isLetter = (char: string): boolean => {
 };
 
 const isAlphabeticLetter = (char: string): boolean => {
-    return LETTER_REGEX.test(char) && !APOSTROPHE_LIKE_CHARS.has(char);
+    return LETTER_REGEX.test(char) && !APOSTROPHE_LIKE_REGEX.test(char);
 };
 
 const findFirstAlphaIndex = (str: string): number => {
@@ -50,17 +49,6 @@ export const generateCaseVariants = (source: string): string[] => {
     return variants;
 };
 
-export const normalizeApostrophes = (str: string): string => {
-    let result = '';
-    for (let i = 0; i < str.length; i++) {
-        const char = str[i];
-        if (!APOSTROPHE_LIKE_CHARS.has(char)) {
-            result += char;
-        }
-    }
-    return result;
-};
-
 /**
  * Determines if a character at a given position is considered a word character.
  * An apostrophe is considered a word character only if it's between letters.
@@ -73,7 +61,7 @@ export const isWordCharacterAt = (text: string, index: number): boolean => {
         return true;
     }
 
-    if (APOSTROPHE_LIKE_CHARS.has(char)) {
+    if (APOSTROPHE_LIKE_REGEX.test(char)) {
         const prevChar = text.charAt(index - 1);
         const nextChar = text.charAt(index + 1);
         const nextNextChar = text.charAt(index + 2);
@@ -178,3 +166,11 @@ function isUpperCase(char: string): boolean {
 function isLowerCase(char: string): boolean {
     return char === char.toLocaleLowerCase() && char !== char.toLocaleUpperCase();
 }
+
+export const mapClipPatternToRegex = (pattern: ClipStartPattern | RegExp) => {
+    if (pattern === ClipStartPattern.Apostrophes) {
+        return APOSTROPHE_LIKE_REGEX;
+    }
+
+    return pattern as RegExp;
+};

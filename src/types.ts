@@ -17,11 +17,16 @@ export enum CaseSensitivity {
     Sensitive = 'sensitive',
 }
 
+export enum ClipStartPattern {
+    Apostrophes = 'apostrophes',
+}
+
 export interface RuleOptions {
     casing?: CaseSensitivity;
+    clipEndPattern?: ClipStartPattern | RegExp;
+    clipStartPattern?: ClipStartPattern | RegExp;
     confirm?: ConfirmOptions;
     match?: MatchType;
-    normalizeApostrophes?: boolean;
     prefix?: string;
 }
 

@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
-import { CaseSensitivity, MatchType, Rule, TrieNode } from './types';
+import { CaseSensitivity, ClipStartPattern, MatchType, Rule, TrieNode } from './types';
 
 describe('trie', () => {
     let rules: Rule[] = [];
@@ -659,24 +659,6 @@ describe('trie', () => {
                 expect(searchAndReplace(trie, `Musa'ab is here`)).toEqual(`Musa'ab is here`);
             });
 
-            it('should handle words starting with apostrophe-like characters correctly', () => {
-                rules = [
-                    {
-                        from: ["'Umar", 'Umar'],
-                        options: {
-                            casing: CaseSensitivity.Insensitive,
-                            match: MatchType.Whole,
-                            normalizeApostrophes: true,
-                        },
-                        to: 'ʿUmar',
-                    },
-                ];
-
-                trie = buildTrie(rules);
-
-                expect(searchAndReplace(trie, `'Umar's wisdom`)).toEqual(`ʿUmar's wisdom`);
-            });
-
             it('should handle the apostrophe with the whole word', () => {
                 rules = [
                     {
@@ -853,7 +835,7 @@ describe('trie', () => {
                 rules = [
                     {
                         from: ["'Umar", 'Umar'],
-                        options: { match: MatchType.Whole },
+                        options: { clipApostrophes: true, match: MatchType.Whole },
                         to: 'ʿUmar',
                     },
                 ];
@@ -862,6 +844,48 @@ describe('trie', () => {
 
                 expect(searchAndReplace(trie, `'Umar's wisdom`)).toEqual(`ʿUmar's wisdom`);
                 expect(searchAndReplace(trie, `I spoke to Umar`)).toEqual(`I spoke to ʿUmar`);
+            });
+
+            it('should handle both rules with and without normalizeApostrophes', () => {
+                rules = [
+                    {
+                        from: ["'Umar", 'Umar'],
+                        options: {
+                            casing: CaseSensitivity.Insensitive,
+                            clipStartPattern: ClipStartPattern.Apostrophes,
+                            match: MatchType.Whole,
+                        },
+                        to: 'ʿUmar',
+                    },
+                    {
+                        from: ["Ka'bah"],
+                        options: {
+                            match: MatchType.Whole,
+                        },
+                        to: 'Kaʿbah',
+                    },
+                    {
+                        from: ['Isha'],
+                        options: {
+                            match: MatchType.Whole,
+                        },
+                        to: 'ʿIshāʾ',
+                    },
+                    {
+                        from: ['ulamaa'],
+                        options: {
+                            clipEndPattern: /[`'ʾʿ‘’]+$/,
+                            match: MatchType.Whole,
+                        },
+                        to: 'ʿulamāʾ',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `'Umar visited the Ka'bah with the ulamaa' at 'Isha.`)).toEqual(
+                    `ʿUmar visited the Kaʿbah with the ʿulamāʾ at 'ʿIshāʾ.`,
+                );
             });
 
             describe('CaseSensitivity', () => {

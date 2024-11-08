@@ -1,5 +1,12 @@
 import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode } from './types';
-import { adjustCasing, generateCaseVariants, isConsidered, isValidMatch, normalizeApostrophes } from './utils';
+import {
+    adjustCasing,
+    APOSTROPHE_LIKE_REGEX,
+    generateCaseVariants,
+    isConsidered,
+    isValidMatch,
+    mapClipPatternToRegex,
+} from './utils';
 
 /**
  * Builds a trie based on the provided rules.
@@ -14,10 +21,6 @@ export const buildTrie = (rules: Rule[]): TrieNode => {
 
             if (options?.casing === CaseSensitivity.Insensitive) {
                 variants = variants.flatMap(generateCaseVariants);
-            }
-
-            if (options?.normalizeApostrophes) {
-                variants = variants.map(normalizeApostrophes);
             }
 
             for (const variant of variants) {
@@ -141,6 +144,14 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
                 }
             }
 
+            if (matchedNode.options?.clipStartPattern) {
+                const regex = mapClipPatternToRegex(matchedNode.options?.clipStartPattern);
+
+                if (regex.test(result.at(-1) as string)) {
+                    result = result.slice(0, -1);
+                }
+            }
+
             // Determine whether to adjust casing based on the 'casing' option
             let replacementText = matchedNode.target;
             const casingOption = matchedNode.options?.casing;
@@ -152,6 +163,14 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
 
             result += replacementText;
             i = endIndex;
+
+            if (matchedNode.options?.clipEndPattern) {
+                const regex = mapClipPatternToRegex(matchedNode.options?.clipEndPattern);
+
+                if (regex.test(text.charAt(endIndex))) {
+                    i++;
+                }
+            }
         } else {
             result += text[i];
             i++;
