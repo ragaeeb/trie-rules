@@ -15,7 +15,16 @@
 
 # Introduction
 
-[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295) ![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules) ![npm](https://img.shields.io/npm/v/trie-rules) ![npm](https://img.shields.io/npm/dm/trie-rules) ![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules) ![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social) ![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/trie-rules) [![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules) [![Size](https://deno.bundlejs.com/badge?q=trie-rules@2.0.2&badge=detailed)](https://bundlejs.com/?q=trie-rules%402.0.2) ![typescript](https://badgen.net/badge/icon/typescript?icon=typescript&label&color=blue)
+[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295)
+![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules)
+![npm](https://img.shields.io/npm/v/trie-rules)
+![npm](https://img.shields.io/npm/dm/trie-rules)
+![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules)
+![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social)
+![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/trie-rules)
+[![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules)
+[![Size](https://deno.bundlejs.com/badge?q=trie-rules@2.1.0&badge=detailed)](https://bundlejs.com/?q=trie-rules%402.1.0)
+![typescript](https://badgen.net/badge/icon/typescript?icon=typescript&label&color=blue)
 
 The `trie-rules` project is an efficient search and replace algorithm that performs replacements on any given text based on a predefined rule set.
 

@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
-import { MatchType, Rule, TrieNode } from './types';
+import { CaseSensitivity, MatchType, Rule, TrieNode } from './types';
 
 describe('trie', () => {
     let rules: Rule[] = [];
@@ -11,12 +11,12 @@ describe('trie', () => {
         beforeAll(() => {
             rules = [
                 {
-                    sources: ['Source1', 'Src1'],
-                    target: 'Target1',
+                    from: ['Source1', 'Src1'],
+                    to: 'Target1',
                 },
                 {
-                    sources: ['Source2'],
-                    target: 'Target2',
+                    from: ['Source2'],
+                    to: 'Target2',
                 },
             ];
 
@@ -38,8 +38,8 @@ describe('trie', () => {
     describe('containsTarget', () => {
         beforeEach(() => {
             rules = [
-                { options: { match: MatchType.Whole }, sources: ['ibn'], target: 'b.' },
-                { options: { match: MatchType.Whole }, sources: ['ibn ‘Abbaas'], target: 'Ibn ʿAbbās' },
+                { from: ['ibn'], options: { match: MatchType.Whole }, to: 'b.' },
+                { from: ['ibn ‘Abbaas'], options: { match: MatchType.Whole }, to: 'Ibn ʿAbbās' },
             ];
 
             trie = buildTrie(rules);
@@ -54,16 +54,16 @@ describe('trie', () => {
             expect(containsTarget(trie, 'ibn')).toBe(false);
         });
 
-        it('should match case insensitive target', () => {
+        it('should match case insensitive to', () => {
             expect(containsTarget(trie, 'ibn ʿAbbās', { caseInsensitive: true })).toBe(true);
         });
     });
 
     describe('searchAndReplace', () => {
-        it('should replace all the abbreviations with the target', () => {
+        it('should replace all the abbreviations with the to', () => {
             rules = [
                 {
-                    sources: [
+                    from: [
                         'RA',
                         'عنه هللا رضي',
                         "radi Allahu 'anhu",
@@ -72,18 +72,18 @@ describe('trie', () => {
                         'radiyallāhu ‘anhu',
                         'رضیﷲ عنه',
                     ],
-                    target: '(may Allah be pleased with him)',
+                    to: '(may Allah be pleased with him)',
                 },
-                { sources: ['RAA', 'رضي الله عنها'], target: '(may Allah be pleased with her)' },
+                { from: ['RAA', 'رضي الله عنها'], to: '(may Allah be pleased with her)' },
                 {
+                    from: ['RH'],
                     options: { match: MatchType.Alone },
-                    sources: ['RH'],
-                    target: '(may Allah be pleased with him) reported that the Messenger ﷺ said:',
+                    to: '(may Allah be pleased with him) reported that the Messenger ﷺ said:',
                 },
                 {
+                    from: ['ASWJ'],
                     options: { match: MatchType.Whole },
-                    sources: ['ASWJ'],
-                    target: 'Ahl al-Sunnah waʿl-Jamāʿah',
+                    to: 'Ahl al-Sunnah waʿl-Jamāʿah',
                 },
             ];
 
@@ -100,18 +100,18 @@ describe('trie', () => {
         it('should replace the small terms within a sentence as well', () => {
             rules = [
                 {
+                    from: ['ibn'],
                     options: {
                         match: MatchType.Whole,
                     },
-                    sources: ['ibn'],
-                    target: 'b.',
+                    to: 'b.',
                 },
                 {
+                    from: ['ibn ‘Abbaas'],
                     options: {
                         match: MatchType.Whole,
                     },
-                    sources: ['ibn ‘Abbaas'],
-                    target: 'Ibn ʿAbbās',
+                    to: 'Ibn ʿAbbās',
                 },
             ];
 
@@ -124,18 +124,18 @@ describe('trie', () => {
         it('should replace the Awf without affecting Awfá', () => {
             rules = [
                 {
+                    from: ['Awfa'],
                     options: {
                         match: MatchType.Whole,
                     },
-                    sources: ['Awfa'],
-                    target: 'Awfá',
+                    to: 'Awfá',
                 },
                 {
+                    from: ['Awf'],
                     options: {
                         match: MatchType.Whole,
                     },
-                    sources: ['Awf'],
-                    target: 'ʿAwf',
+                    to: 'ʿAwf',
                 },
             ];
 
@@ -145,26 +145,26 @@ describe('trie', () => {
             expect(actual).toEqual('Awfá and Awfá went with ʿAwf');
         });
 
-        it('should replace the sources with their targets', () => {
+        it('should replace the from with their targets', () => {
             rules = [
-                { sources: ['--'], target: '-' },
-                { sources: ['Abaan'], target: 'Abān' },
-                { options: { match: MatchType.Whole }, sources: ['Abee', 'Abi', 'abi', 'abee'], target: 'Abī' },
-                { options: { match: MatchType.Whole }, sources: ['Abu', 'Aboo', 'Abû', 'Abü'], target: 'Abū' },
+                { from: ['--'], to: '-' },
+                { from: ['Abaan'], to: 'Abān' },
+                { from: ['Abee', 'Abi', 'abi', 'abee'], options: { match: MatchType.Whole }, to: 'Abī' },
+                { from: ['Abu', 'Aboo', 'Abû', 'Abü'], options: { match: MatchType.Whole }, to: 'Abū' },
                 {
+                    from: ['akhi'],
                     options: { match: MatchType.Whole },
-                    sources: ['akhi'],
-                    target: 'akhī',
+                    to: 'akhī',
                 },
                 {
+                    from: ['Akhi'],
                     options: { match: MatchType.Whole },
-                    sources: ['Akhi'],
-                    target: 'Akhī',
+                    to: 'Akhī',
                 },
                 {
+                    from: ['Ayoob', 'Ayuub', 'Ayyoob', 'Ayyoub', 'Ayyub', 'Ayoub', 'Ayub', 'Ayyüb'],
                     options: { match: MatchType.Whole },
-                    sources: ['Ayoob', 'Ayuub', 'Ayyoob', 'Ayyoub', 'Ayyub', 'Ayoub', 'Ayub', 'Ayyüb'],
-                    target: 'Ayyūb',
+                    to: 'Ayyūb',
                 },
             ];
             trie = buildTrie(rules);
@@ -179,26 +179,26 @@ describe('trie', () => {
 
         it('should replace with all the rules properly', () => {
             rules = [
-                { options: { match: MatchType.Whole }, sources: ['Abul'], target: 'Abū al-' },
-                { options: { match: MatchType.Whole }, sources: ['Adaab'], target: 'Adāb' },
-                { options: { match: MatchType.Whole }, sources: ['adaab'], target: 'adāb' },
-                { sources: ['Ahl-ul-', 'Ahlul', 'Ahlus', 'ahl-ul-'], target: 'Ahl al-' },
+                { from: ['Abul'], options: { match: MatchType.Whole }, to: 'Abū al-' },
+                { from: ['Adaab'], options: { match: MatchType.Whole }, to: 'Adāb' },
+                { from: ['adaab'], options: { match: MatchType.Whole }, to: 'adāb' },
+                { from: ['Ahl-ul-', 'Ahlul', 'Ahlus', 'ahl-ul-'], to: 'Ahl al-' },
                 {
+                    from: ['Ameen', 'ameen'],
                     options: { match: MatchType.Whole },
-                    sources: ['Ameen', 'ameen'],
-                    target: 'Amīn',
+                    to: 'Amīn',
                 },
                 {
+                    from: ["A'oodhu", "a'oodhu"],
                     options: { match: MatchType.Whole },
-                    sources: ["A'oodhu", "a'oodhu"],
-                    target: 'Aʿūḏu',
+                    to: 'Aʿūḏu',
                 },
                 {
+                    from: ['Adhaa', "Ad'haa", 'Adha'],
                     options: { match: MatchType.Whole },
-                    sources: ['Adhaa', "Ad'haa", 'Adha'],
-                    target: 'Aḍḥá',
+                    to: 'Aḍḥá',
                 },
-                { sources: ['...'], target: '…' },
+                { from: ['...'], to: '…' },
             ];
             trie = buildTrie(rules);
             const actual = searchAndReplace(
@@ -213,13 +213,13 @@ describe('trie', () => {
         it('should only replace to Dhuhr when it is by itself', () => {
             rules = [
                 {
+                    from: ['Thuhr', 'Zuhr', 'thuhr', 'zuhr'],
                     options: { match: MatchType.Whole },
-                    sources: ['Thuhr', 'Zuhr', 'thuhr', 'zuhr'],
-                    target: 'Dhuhr',
+                    to: 'Dhuhr',
                 },
                 {
-                    sources: ['Zuhri', 'Zuhree', 'Dhuhri'],
-                    target: 'Zuhrī',
+                    from: ['Zuhri', 'Zuhree', 'Dhuhri'],
+                    to: 'Zuhrī',
                 },
             ];
 
@@ -236,9 +236,9 @@ describe('trie', () => {
         it('should only replace to ʿalá when the word is by itself', () => {
             rules = [
                 {
+                    from: ['ala', 'Ala', 'alaa'],
                     options: { match: MatchType.Alone },
-                    sources: ['ala', 'Ala', 'alaa'],
-                    target: 'ʿalá',
+                    to: 'ʿalá',
                 },
             ];
 
@@ -255,9 +255,9 @@ describe('trie', () => {
         it('should only replace Asr when it is by itself', () => {
             rules = [
                 {
+                    from: ['Asr', 'asr'],
                     options: { match: MatchType.Whole },
-                    sources: ['Asr', 'asr'],
-                    target: 'ʿAṣr',
+                    to: 'ʿAṣr',
                 },
             ];
 
@@ -269,9 +269,9 @@ describe('trie', () => {
         it('should match the special character in the beginning of the string', () => {
             rules = [
                 {
+                    from: ['Ṣafwan'],
                     options: { match: MatchType.Whole },
-                    sources: ['Ṣafwan'],
-                    target: 'Ṣafwān',
+                    to: 'Ṣafwān',
                 },
             ];
 
@@ -283,7 +283,7 @@ describe('trie', () => {
         it('should replace the salutations', () => {
             rules = [
                 {
-                    sources: [
+                    from: [
                         ', peace and blessings be upon him,',
                         ', sallallaahu ‘alayhi wa sallam,',
                         "sallalaahu alayhi wa'sallam",
@@ -360,7 +360,7 @@ describe('trie', () => {
                         'sallallaahu ʿalayhi wa sallam',
                         '-ﷺ-',
                     ],
-                    target: 'ﷺ',
+                    to: 'ﷺ',
                 },
             ];
 
@@ -377,12 +377,12 @@ describe('trie', () => {
         it('should replace the quotations properly', () => {
             rules = [
                 {
-                    sources: ['❝'],
-                    target: '“',
+                    from: ['❝'],
+                    to: '“',
                 },
                 {
-                    sources: ['❞'],
-                    target: '”',
+                    from: ['❞'],
+                    to: '”',
                 },
             ];
 
@@ -394,44 +394,44 @@ describe('trie', () => {
         it('should replace with the diacritical marks', () => {
             rules = [
                 {
-                    sources: ['t_'],
-                    target: 'ṭ',
+                    from: ['t_'],
+                    to: 'ṭ',
                 },
                 {
-                    sources: ['T_'],
-                    target: 'Ṭ',
+                    from: ['T_'],
+                    to: 'Ṭ',
                 },
                 {
-                    sources: ['d_'],
-                    target: 'ḍ',
+                    from: ['d_'],
+                    to: 'ḍ',
                 },
                 {
-                    sources: ['D_'],
-                    target: 'Ḍ',
+                    from: ['D_'],
+                    to: 'Ḍ',
                 },
                 {
-                    sources: ['d\\'],
-                    target: 'ḏ',
+                    from: ['d\\'],
+                    to: 'ḏ',
                 },
                 {
-                    sources: ['D\\'],
-                    target: 'Ḏ',
+                    from: ['D\\'],
+                    to: 'Ḏ',
                 },
                 {
-                    sources: ['g_'],
-                    target: 'ġ',
+                    from: ['g_'],
+                    to: 'ġ',
                 },
                 {
-                    sources: ['G_'],
-                    target: 'Ġ',
+                    from: ['G_'],
+                    to: 'Ġ',
                 },
                 {
-                    sources: ['h_'],
-                    target: 'ḥ',
+                    from: ['h_'],
+                    to: 'ḥ',
                 },
                 {
-                    sources: ['H_'],
-                    target: 'Ḥ',
+                    from: ['H_'],
+                    to: 'Ḥ',
                 },
             ];
 
@@ -443,8 +443,8 @@ describe('trie', () => {
         it('should replace Isha', () => {
             rules = [
                 {
-                    sources: ['Isha', 'Ishaa', "'Ishaa", "'Isha"],
-                    target: 'ʿIshāʾ',
+                    from: ['Isha', 'Ishaa', "'Ishaa", "'Isha"],
+                    to: 'ʿIshāʾ',
                 },
             ];
 
@@ -461,15 +461,15 @@ describe('trie', () => {
         it('should replace fi, but not fit', () => {
             rules = [
                 {
-                    sources: ['fitra'],
-                    target: 'fiṭra',
+                    from: ['fitra'],
+                    to: 'fiṭra',
                 },
                 {
+                    from: ['fi'],
                     options: {
                         match: MatchType.Whole,
                     },
-                    sources: ['fi'],
-                    target: 'fī',
+                    to: 'fī',
                 },
             ];
 
@@ -480,11 +480,11 @@ describe('trie', () => {
         it('should not replace Aslam', () => {
             rules = [
                 {
+                    from: ['Aas', 'Aass'],
                     options: {
                         match: MatchType.Whole,
                     },
-                    sources: ['Aas', 'Aass'],
-                    target: 'ʿĀṣ',
+                    to: 'ʿĀṣ',
                 },
             ];
 
@@ -495,9 +495,9 @@ describe('trie', () => {
         describe('fixQuotes', () => {
             beforeEach(() => {
                 rules = [
-                    { sources: ['‛ʿ', '’ʿ', 'ʿʿ', '‘ʿ', "ʿ'", "'ʿ", 'ʿ’', '`', 'ˋ'], target: 'ʿ' },
-                    { sources: ['Abbas'], target: 'ʿAbbās' },
-                    { sources: ['ʾ’', 'ʾʾ', '’ʾ', "ʾ'", "'ʾ"], target: 'ʾ' },
+                    { from: ['‛ʿ', '’ʿ', 'ʿʿ', '‘ʿ', "ʿ'", "'ʿ", 'ʿ’', '`', 'ˋ'], to: 'ʿ' },
+                    { from: ['Abbas'], to: 'ʿAbbās' },
+                    { from: ['ʾ’', 'ʾʾ', '’ʾ', "ʾ'", "'ʾ"], to: 'ʾ' },
                 ];
 
                 trie = buildTrie(rules);
@@ -545,12 +545,12 @@ describe('trie', () => {
             beforeEach(() => {
                 rules = [
                     {
-                        sources: ['‘‘'],
-                        target: '“',
+                        from: ['‘‘'],
+                        to: '“',
                     },
                     {
-                        sources: ['’’'],
-                        target: '”',
+                        from: ['’’'],
+                        to: '”',
                     },
                 ];
 
@@ -568,18 +568,14 @@ describe('trie', () => {
 
         describe('searchAndReplace with prefix option', () => {
             it('should add the prefix if not present', () => {
-                rules = [
-                    { options: { match: MatchType.Whole, prefix: 'al-' }, sources: ['Bukhari'], target: 'Bukhārī' },
-                ];
+                rules = [{ from: ['Bukhari'], options: { match: MatchType.Whole, prefix: 'al-' }, to: 'Bukhārī' }];
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(trie, 'I read Bukhari yesterday.');
                 expect(actual).toEqual('I read al-Bukhārī yesterday.');
             });
 
             it('should not add the prefix if it is already present', () => {
-                rules = [
-                    { options: { match: MatchType.Whole, prefix: 'al-' }, sources: ['Bukhari'], target: 'Bukhārī' },
-                ];
+                rules = [{ from: ['Bukhari'], options: { match: MatchType.Whole, prefix: 'al-' }, to: 'Bukhārī' }];
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(trie, 'I read al-Bukhari yesterday.');
                 expect(actual).toEqual('I read al-Bukhārī yesterday.');
@@ -588,11 +584,11 @@ describe('trie', () => {
             it('should handle multiple rules and cases where prefix is not needed', () => {
                 rules = [
                     {
+                        from: ['Bukhari', 'Bukharee'],
                         options: { match: MatchType.Whole, prefix: 'al-' },
-                        sources: ['Bukhari', 'Bukharee'],
-                        target: 'Bukhārī',
+                        to: 'Bukhārī',
                     },
-                    { options: { match: MatchType.Whole }, sources: ['Muslim'], target: 'Muslim' },
+                    { from: ['Muslim'], options: { match: MatchType.Whole }, to: 'Muslim' },
                 ];
                 trie = buildTrie(rules);
                 const actual = searchAndReplace(trie, 'Bukharee and Muslim are both hadith books.');
@@ -602,14 +598,14 @@ describe('trie', () => {
             it('should handle multiple variations', () => {
                 rules = [
                     {
+                        from: ['Bukhari', 'Bukharee', 'Bukhaaree'],
                         options: { match: MatchType.Whole, prefix: 'al-' },
-                        sources: ['Bukhari', 'Bukharee', 'Bukhaaree'],
-                        target: 'Bukhārī',
+                        to: 'Bukhārī',
                     },
                     {
+                        from: ['Shawkani', 'Shawkaanee', 'Shawkaani', 'ash-Shawkani'],
                         options: { match: MatchType.Whole, prefix: 'al-' },
-                        sources: ['Shawkani', 'Shawkaanee', 'Shawkaani', 'ash-Shawkani'],
-                        target: 'Shawkānī',
+                        to: 'Shawkānī',
                     },
                 ];
                 trie = buildTrie(rules);
@@ -626,11 +622,11 @@ describe('trie', () => {
         it('should handle ʿalá', () => {
             rules = [
                 {
+                    from: ['Ala', 'ala', 'alaa'],
                     options: {
                         match: MatchType.Whole,
                     },
-                    sources: ['Ala', 'ala', 'alaa'],
-                    target: 'ʿalá',
+                    to: 'ʿalá',
                 },
             ];
 
@@ -643,18 +639,18 @@ describe('trie', () => {
             it('should handle apostrophes', () => {
                 rules = [
                     {
+                        from: ['Musa', 'Mûsā', 'Moosaa', 'Moosa', 'Moses', 'Mūsā', 'Mūsa', 'Moussa'],
                         options: {
                             match: MatchType.Whole,
                         },
-                        sources: ['Musa', 'Mûsā', 'Moosaa', 'Moosa', 'Moses', 'Mūsā', 'Mūsa', 'Moussa'],
-                        target: 'Mūsá',
+                        to: 'Mūsá',
                     },
                     {
+                        from: ['Mus‘ab', 'Musab', 'Mus’ab', "Mus'ab"],
                         options: {
                             match: MatchType.Whole,
                         },
-                        sources: ['Mus‘ab', 'Musab', 'Mus’ab', "Mus'ab"],
-                        target: 'Muṣʿab',
+                        to: 'Muṣʿab',
                     },
                 ];
 
@@ -666,8 +662,7 @@ describe('trie', () => {
             it('should handle the apostrophe with the whole word', () => {
                 rules = [
                     {
-                        options: { match: MatchType.Whole },
-                        sources: [
+                        from: [
                             'Saaleh',
                             'Saalih',
                             'Salih',
@@ -677,7 +672,8 @@ describe('trie', () => {
                             'Shalih',
                             'S\u0101leh',
                         ],
-                        target: '\u1e62\u0101li\u1e25',
+                        options: { match: MatchType.Whole },
+                        to: '\u1e62\u0101li\u1e25',
                     },
                 ];
 
@@ -689,9 +685,9 @@ describe('trie', () => {
             it('should handle transliterated words where apostrophe s is part of the word', () => {
                 rules = [
                     {
+                        from: ["Ma'as", 'Maas'],
                         options: { match: MatchType.Whole },
-                        sources: ["Ma'as", 'Maas'],
-                        target: 'Maʿās',
+                        to: 'Maʿās',
                     },
                 ];
 
@@ -704,9 +700,9 @@ describe('trie', () => {
             it('should correctly handle possessive apostrophe after transliterated word', () => {
                 rules = [
                     {
+                        from: ['Ibrahim', 'Ebrahim'],
                         options: { match: MatchType.Whole },
-                        sources: ['Ibrahim', 'Ebrahim'],
-                        target: 'Ibrāhīm',
+                        to: 'Ibrāhīm',
                     },
                 ];
 
@@ -719,9 +715,9 @@ describe('trie', () => {
             it('should handle words ending with apostrophe followed by letters', () => {
                 rules = [
                     {
+                        from: ["Sha'ban", 'Shaban'],
                         options: { match: MatchType.Whole },
-                        sources: ["Sha'ban", 'Shaban'],
-                        target: 'Shaʿbān',
+                        to: 'Shaʿbān',
                     },
                 ];
 
@@ -736,9 +732,9 @@ describe('trie', () => {
             it('should handle words with multiple apostrophes', () => {
                 rules = [
                     {
+                        from: ["Ka'ba", 'Kaaba'],
                         options: { match: MatchType.Whole },
-                        sources: ["Ka'ba", 'Kaaba'],
-                        target: 'Kaʿbah',
+                        to: 'Kaʿbah',
                     },
                 ];
 
@@ -755,9 +751,9 @@ describe('trie', () => {
             it('should not replace partial matches within larger words', () => {
                 rules = [
                     {
+                        from: ['Ali'],
                         options: { match: MatchType.Whole },
-                        sources: ['Ali'],
-                        target: 'ʿAlī',
+                        to: 'ʿAlī',
                     },
                 ];
 
@@ -770,9 +766,9 @@ describe('trie', () => {
             it('should handle words where apostrophe s is part of the transliterated word', () => {
                 rules = [
                     {
+                        from: ['Nas'],
                         options: { match: MatchType.Whole },
-                        sources: ['Nas'],
-                        target: 'Nass',
+                        to: 'Nass',
                     },
                 ];
 
@@ -791,9 +787,9 @@ describe('trie', () => {
             it('should correctly handle possessive apostrophe after words ending with s', () => {
                 rules = [
                     {
+                        from: ['Moses'],
                         options: { match: MatchType.Whole },
-                        sources: ['Moses'],
-                        target: 'Mūsá',
+                        to: 'Mūsá',
                     },
                 ];
 
@@ -806,9 +802,9 @@ describe('trie', () => {
             it('should not replace within contractions', () => {
                 rules = [
                     {
+                        from: ['Amr'],
                         options: { match: MatchType.Whole },
-                        sources: ['Amr'],
-                        target: 'ʿAmr',
+                        to: 'ʿAmr',
                     },
                 ];
 
@@ -821,9 +817,9 @@ describe('trie', () => {
             it('should handle words with apostrophes and hyphens', () => {
                 rules = [
                     {
+                        from: ["al-Qur'an", 'al-Quran'],
                         options: { match: MatchType.Whole },
-                        sources: ["al-Qur'an", 'al-Quran'],
-                        target: 'al-Qurʾān',
+                        to: 'al-Qurʾān',
                     },
                 ];
 
@@ -838,9 +834,9 @@ describe('trie', () => {
             it('should handle words starting with an apostrophe', () => {
                 rules = [
                     {
+                        from: ["'Umar", 'Umar'],
                         options: { match: MatchType.Whole },
-                        sources: ["'Umar", 'Umar'],
-                        target: 'ʿUmar',
+                        to: 'ʿUmar',
                     },
                 ];
 
@@ -849,15 +845,31 @@ describe('trie', () => {
                 expect(searchAndReplace(trie, `'Umar's wisdom`)).toEqual(`ʿUmar's wisdom`);
                 expect(searchAndReplace(trie, `I spoke to Umar`)).toEqual(`I spoke to ʿUmar`);
             });
+
+            it('should handle case insensitive matches', () => {
+                rules = [
+                    {
+                        from: ['Isha', 'Ishaa', "'Ishaa", "'Isha"],
+                        options: { casing: CaseSensitivity.Insensitive, match: MatchType.Whole },
+                        to: 'ʿIshāʾ',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(
+                    searchAndReplace(trie, `We went to pray Isha, then after praying al-'isha we went home.`),
+                ).toEqual(`We went to pray ʿIshāʾ, then after praying al-ʿishāʾ we went home.`);
+            });
         });
 
         describe('confirm', () => {
             beforeEach(() => {
                 rules = [
                     {
+                        from: ['Maalik', 'Malik'],
                         options: { confirm: { anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] }, match: MatchType.Whole },
-                        sources: ['Maalik', 'Malik'],
-                        target: 'Mālik',
+                        to: 'Mālik',
                     },
                 ];
             });

@@ -8,19 +8,26 @@ export interface ConfirmCallback {
 
 export enum MatchType {
     Alone = 'alone',
+    Any = 'any',
     Whole = 'whole',
 }
 
+export enum CaseSensitivity {
+    Insensitive = 'insensitive',
+    Sensitive = 'sensitive',
+}
+
 export interface RuleOptions {
+    casing?: CaseSensitivity;
     confirm?: ConfirmOptions;
     match?: MatchType;
     prefix?: string;
 }
 
 export interface Rule {
+    from: string[];
     options?: RuleOptions;
-    sources: string[];
-    target: string;
+    to: string;
 }
 
 export interface TrieNode {
@@ -29,3 +36,8 @@ export interface TrieNode {
     options?: RuleOptions;
     target?: string;
 }
+
+export type SearchAndReplaceOptions = {
+    confirmCallback?: ConfirmCallback;
+    log?({ node }: { node: TrieNode }): void;
+};

@@ -1,4 +1,4 @@
-import { ConfirmCallback, Rule, RuleOptions, TrieNode } from './types';
+import { ConfirmCallback, MatchType, Rule, RuleOptions, SearchAndReplaceOptions, TrieNode } from './types';
 
 const WORD_BOUNDARY = /[a-zA-ZāáḏḍēġḥṣīōṭūĀḌḎĒĠṬḤĪṢŌŪʿʾ]/;
 
@@ -10,8 +10,8 @@ export const buildTrie = (rules: Rule[]): TrieNode => {
 
     for (let i = 0; i < rules.length; i++) {
         const rule = rules[i];
-        for (let j = 0; j < rule.sources.length; j++) {
-            const source = rule.sources[j];
+        for (let j = 0; j < rule.from.length; j++) {
+            const source = rule.from[j];
             let node = trie;
             for (let k = 0; k < source.length; k++) {
                 const char = source[k];
@@ -21,8 +21,8 @@ export const buildTrie = (rules: Rule[]): TrieNode => {
                 node = node[char] as TrieNode;
             }
             node.isEndOfWord = true;
-            node.target = rule.target;
-            node.options = rule.options || {};
+            node.target = rule.to;
+            node.options = rule.options;
         }
     }
 
@@ -118,20 +118,15 @@ const isWordCharacterAt = (text: string, index: number): boolean => {
  * Checks if a match is valid based on the provided options.
  * @returns {boolean} - True if the match is valid, false otherwise.
  */
-const isValidMatch = (
-    text: string,
-    matchStartIndex: number,
-    matchEndIndex: number,
-    options: RuleOptions | undefined,
-): boolean => {
-    if (options && options.match === 'whole') {
+const isValidMatch = (text: string, matchStartIndex: number, matchEndIndex: number, options?: RuleOptions): boolean => {
+    if (options && options.match === MatchType.Whole) {
         const isPrevWordChar = isWordCharacterAt(text, matchStartIndex - 1);
         const isNextWordChar = isWordCharacterAt(text, matchEndIndex);
 
         return !isPrevWordChar && !isNextWordChar;
     }
 
-    if (options?.match === 'alone') {
+    if (options?.match === MatchType.Alone) {
         const prevChar = text.charAt(matchStartIndex - 1) || '';
         const nextChar = text.charAt(matchEndIndex) || '';
         return /\s/.test(prevChar) && /\s/.test(nextChar);
@@ -159,11 +154,7 @@ const isConsidered = (ruleOptions?: RuleOptions, callback?: ConfirmCallback) => 
  * Searches for and replaces text based on the provided trie.
  * @returns {string} - The modified text.
  */
-export const searchAndReplace = (
-    trie: TrieNode,
-    text: string,
-    options: { confirmCallback?: ConfirmCallback } = {},
-): string => {
+export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAndReplaceOptions = {}): string => {
     let result = '';
     let i = 0;
 
@@ -195,6 +186,10 @@ export const searchAndReplace = (
         }
 
         if (longestValidMatch) {
+            if (options.log) {
+                options.log({ node: longestValidMatch });
+            }
+
             if (longestValidMatch.options?.prefix) {
                 const prefixLength = longestValidMatch.options.prefix.length;
                 const startOfPrefix = i - prefixLength;
