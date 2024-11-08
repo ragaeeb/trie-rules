@@ -24,29 +24,26 @@ const findFirstAlphaIndex = (str: string): number => {
 };
 
 export const generateCaseVariants = (source: string): string[] => {
-    const variants = [];
     const index = findFirstAlphaIndex(source);
     if (index === -1) {
-        variants.push(source);
-        return variants;
+        return [source];
     }
 
-    const firstChar = source[index];
+    const firstChar = source.charAt(index);
     const upperFirstChar = firstChar.toLocaleUpperCase();
     const lowerFirstChar = firstChar.toLocaleLowerCase();
 
     if (upperFirstChar === lowerFirstChar) {
-        variants.push(source);
+        return [source];
     } else {
-        const chars = source.split('');
-        chars[index] = upperFirstChar;
-        variants.push(chars.join(''));
+        const prefix = source.substring(0, index);
+        const suffix = source.substring(index + 1);
 
-        chars[index] = lowerFirstChar;
-        variants.push(chars.join(''));
+        const variantUpper = prefix + upperFirstChar + suffix;
+        const variantLower = prefix + lowerFirstChar + suffix;
+
+        return [variantUpper, variantLower];
     }
-
-    return variants;
 };
 
 /**
@@ -64,9 +61,10 @@ export const isWordCharacterAt = (text: string, index: number): boolean => {
     if (APOSTROPHE_LIKE_REGEX.test(char)) {
         const prevChar = text.charAt(index - 1);
         const nextChar = text.charAt(index + 1);
-        const nextNextChar = text.charAt(index + 2);
 
         if (isLetter(prevChar) && isLetter(nextChar)) {
+            const nextNextChar = text.charAt(index + 2);
+
             // Apostrophe between letters, could be part of the word
             // Check if it's a possessive 's'
             if (nextChar.toLowerCase() === 's' && !isLetter(nextNextChar)) {

@@ -1,4 +1,4 @@
-import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode } from './types';
+import { CaseSensitivity, Rule, RuleOptions, SearchAndReplaceOptions, TrieNode } from './types';
 import { adjustCasing, generateCaseVariants, isConsidered, isValidMatch, mapClipPatternToRegex } from './utils';
 
 /**
@@ -9,30 +9,34 @@ export const buildTrie = (rules: Rule[]): TrieNode => {
 
     for (const rule of rules) {
         const { from: sources, options, to: target } = rule;
+
         for (const source of sources) {
-            let variants = [source];
-
             if (options?.casing === CaseSensitivity.Insensitive) {
-                variants = variants.flatMap(generateCaseVariants);
-            }
-
-            for (const variant of variants) {
-                let node = trie;
-                for (const char of variant) {
-                    if (!node[char]) {
-                        node[char] = {};
-                    }
-                    node = node[char] as TrieNode;
+                const variants = generateCaseVariants(source);
+                for (const variant of variants) {
+                    insertWordIntoTrie(trie, variant, target, options);
                 }
-                node.isEndOfWord = true;
-                node.target = target;
-                node.options = options;
+            } else {
+                insertWordIntoTrie(trie, source, target, options);
             }
         }
     }
 
     return trie;
 };
+
+function insertWordIntoTrie(trie: TrieNode, word: string, target: string, options?: RuleOptions): void {
+    let node = trie;
+    for (const char of word) {
+        if (!node[char]) {
+            node[char] = {};
+        }
+        node = node[char] as TrieNode;
+    }
+    node.isEndOfWord = true;
+    node.target = target;
+    node.options = options;
+}
 
 /**
  * Checks if a source exists in the trie.
