@@ -659,6 +659,24 @@ describe('trie', () => {
                 expect(searchAndReplace(trie, `Musa'ab is here`)).toEqual(`Musa'ab is here`);
             });
 
+            it('should handle words starting with apostrophe-like characters correctly', () => {
+                rules = [
+                    {
+                        from: ["'Umar", 'Umar'],
+                        options: {
+                            casing: CaseSensitivity.Insensitive,
+                            match: MatchType.Whole,
+                            normalizeApostrophes: true,
+                        },
+                        to: 'ʿUmar',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `'Umar's wisdom`)).toEqual(`ʿUmar's wisdom`);
+            });
+
             it('should handle the apostrophe with the whole word', () => {
                 rules = [
                     {
@@ -846,20 +864,38 @@ describe('trie', () => {
                 expect(searchAndReplace(trie, `I spoke to Umar`)).toEqual(`I spoke to ʿUmar`);
             });
 
-            it('should handle case insensitive matches', () => {
-                rules = [
-                    {
-                        from: ['Isha', 'Ishaa', "'Ishaa", "'Isha"],
-                        options: { casing: CaseSensitivity.Insensitive, match: MatchType.Whole },
-                        to: 'ʿIshāʾ',
-                    },
-                ];
+            describe('CaseSensitivity', () => {
+                it('should handle case insensitive matches', () => {
+                    rules = [
+                        {
+                            from: ['Isha', 'Ishaa', "'Ishaa", "'Isha"],
+                            options: { casing: CaseSensitivity.Insensitive, match: MatchType.Whole },
+                            to: 'ʿIshāʾ',
+                        },
+                    ];
 
-                trie = buildTrie(rules);
+                    trie = buildTrie(rules);
 
-                expect(
-                    searchAndReplace(trie, `We went to pray Isha, then after praying al-'isha we went home.`),
-                ).toEqual(`We went to pray ʿIshāʾ, then after praying al-ʿishāʾ we went home.`);
+                    expect(
+                        searchAndReplace(trie, `We went to pray Isha, then after praying al-'isha we went home.`),
+                    ).toEqual(`We went to pray ʿIshāʾ, then after praying al-ʿishāʾ we went home.`);
+                });
+
+                it('should handle case sensitive matches without adjusting casing', () => {
+                    rules = [
+                        {
+                            from: ['Asr', 'asr'],
+                            options: { match: MatchType.Whole }, // No casing option specified
+                            to: 'ʿAṣr',
+                        },
+                    ];
+
+                    trie = buildTrie(rules);
+
+                    expect(searchAndReplace(trie, `During Asr, see Kashf al-Asrār 2/383`)).toEqual(
+                        `During ʿAṣr, see Kashf al-Asrār 2/383`,
+                    );
+                });
             });
         });
 

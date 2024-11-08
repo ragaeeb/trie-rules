@@ -1,6 +1,5 @@
-import { ConfirmCallback, MatchType, Rule, RuleOptions, SearchAndReplaceOptions, TrieNode } from './types';
-
-const WORD_BOUNDARY = /[a-zA-ZāáḏḍēġḥṣīōṭūĀḌḎĒĠṬḤĪṢŌŪʿʾ]/;
+import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode } from './types';
+import { adjustCasing, generateCaseVariants, isConsidered, isValidMatch, normalizeApostrophes } from './utils';
 
 /**
  * Builds a trie based on the provided rules.
@@ -8,21 +7,31 @@ const WORD_BOUNDARY = /[a-zA-ZāáḏḍēġḥṣīōṭūĀḌḎĒĠṬḤĪ�
 export const buildTrie = (rules: Rule[]): TrieNode => {
     const trie: TrieNode = {};
 
-    for (let i = 0; i < rules.length; i++) {
-        const rule = rules[i];
-        for (let j = 0; j < rule.from.length; j++) {
-            const source = rule.from[j];
-            let node = trie;
-            for (let k = 0; k < source.length; k++) {
-                const char = source[k];
-                if (!node[char]) {
-                    node[char] = {};
-                }
-                node = node[char] as TrieNode;
+    for (const rule of rules) {
+        const { from: sources, options, to: target } = rule;
+        for (const source of sources) {
+            let variants = [source];
+
+            if (options?.casing === CaseSensitivity.Insensitive) {
+                variants = variants.flatMap(generateCaseVariants);
             }
-            node.isEndOfWord = true;
-            node.target = rule.to;
-            node.options = rule.options;
+
+            if (options?.normalizeApostrophes) {
+                variants = variants.map(normalizeApostrophes);
+            }
+
+            for (const variant of variants) {
+                let node = trie;
+                for (const char of variant) {
+                    if (!node[char]) {
+                        node[char] = {};
+                    }
+                    node = node[char] as TrieNode;
+                }
+                node.isEndOfWord = true;
+                node.target = target;
+                node.options = options;
+            }
         }
     }
 
@@ -79,77 +88,6 @@ export const containsTarget = (trie: TrieNode, text: string, options: { caseInse
     return false;
 };
 
-const isLetter = (char: string): boolean => {
-    return WORD_BOUNDARY.test(char);
-};
-
-/**
- * Determines if a character at a given position is considered a word character.
- * An apostrophe is considered a word character only if it's between letters.
- */
-const isWordCharacterAt = (text: string, index: number): boolean => {
-    const char = text.charAt(index);
-    if (!char) return false;
-
-    if (isLetter(char)) {
-        return true;
-    }
-
-    if (char === "'") {
-        const prevChar = text.charAt(index - 1);
-        const nextChar = text.charAt(index + 1);
-        const nextNextChar = text.charAt(index + 2);
-
-        if (isLetter(prevChar) && isLetter(nextChar)) {
-            // Apostrophe between letters, could be part of the word
-            // Check if it's a possessive 's'
-            if (nextChar.toLowerCase() === 's' && !isLetter(nextNextChar)) {
-                // Apostrophe 's' is possessive, not part of the word
-                return false;
-            }
-            return true;
-        }
-    }
-
-    return false;
-};
-
-/**
- * Checks if a match is valid based on the provided options.
- * @returns {boolean} - True if the match is valid, false otherwise.
- */
-const isValidMatch = (text: string, matchStartIndex: number, matchEndIndex: number, options?: RuleOptions): boolean => {
-    if (options && options.match === MatchType.Whole) {
-        const isPrevWordChar = isWordCharacterAt(text, matchStartIndex - 1);
-        const isNextWordChar = isWordCharacterAt(text, matchEndIndex);
-
-        return !isPrevWordChar && !isNextWordChar;
-    }
-
-    if (options?.match === MatchType.Alone) {
-        const prevChar = text.charAt(matchStartIndex - 1) || '';
-        const nextChar = text.charAt(matchEndIndex) || '';
-        return /\s/.test(prevChar) && /\s/.test(nextChar);
-    }
-
-    if (options?.prefix) {
-        const prefixLength = options.prefix.length;
-        const startOfPrefix = matchStartIndex - prefixLength;
-        // It's a valid match if the prefix is not present, as we will add it
-        return startOfPrefix < 0 || text.slice(startOfPrefix, matchStartIndex) !== options.prefix;
-    }
-
-    return true;
-};
-
-const isConsidered = (ruleOptions?: RuleOptions, callback?: ConfirmCallback) => {
-    if (ruleOptions?.confirm && callback) {
-        return callback(ruleOptions.confirm);
-    }
-
-    return true;
-};
-
 /**
  * Searches for and replaces text based on the provided trie.
  * @returns {string} - The modified text.
@@ -163,9 +101,10 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
         let j = i;
         const potentialMatches = [];
 
-        while (node[text[j]] && j < text.length) {
+        while (j < text.length && node[text[j]]) {
             node = node[text[j]] as TrieNode;
             j++;
+
             if (node.isEndOfWord) {
                 potentialMatches.push({ endIndex: j, node, startIndex: i });
             }
@@ -179,29 +118,40 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
                 isValidMatch(text, startIndex, endIndex, potentialNode.options) &&
                 isConsidered(potentialNode.options, options.confirmCallback)
             ) {
-                longestValidMatch = potentialNode;
-                j = endIndex;
+                longestValidMatch = { endIndex, node: potentialNode, startIndex };
                 break;
             }
         }
 
         if (longestValidMatch) {
+            const { endIndex, node: matchedNode, startIndex } = longestValidMatch;
+
             if (options.log) {
-                options.log({ node: longestValidMatch });
+                options.log({ node: matchedNode });
             }
 
-            if (longestValidMatch.options?.prefix) {
-                const prefixLength = longestValidMatch.options.prefix.length;
-                const startOfPrefix = i - prefixLength;
+            // Handle prefix option
+            if (matchedNode.options?.prefix) {
+                const prefixLength = matchedNode.options.prefix.length;
+                const startOfPrefix = startIndex - prefixLength;
                 const hasPrefix =
-                    startOfPrefix >= 0 && text.slice(startOfPrefix, i) === longestValidMatch.options.prefix;
+                    startOfPrefix >= 0 && text.slice(startOfPrefix, startIndex) === matchedNode.options.prefix;
                 if (!hasPrefix) {
-                    result += longestValidMatch.options.prefix;
+                    result += matchedNode.options.prefix;
                 }
             }
 
-            result += longestValidMatch.target;
-            i = j;
+            // Determine whether to adjust casing based on the 'casing' option
+            let replacementText = matchedNode.target;
+            const casingOption = matchedNode.options?.casing;
+
+            if (casingOption === CaseSensitivity.Insensitive) {
+                const matchedText = text.slice(startIndex, endIndex);
+                replacementText = adjustCasing(matchedText, matchedNode.target as string);
+            }
+
+            result += replacementText;
+            i = endIndex;
         } else {
             result += text[i];
             i++;

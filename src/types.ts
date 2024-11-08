@@ -21,6 +21,7 @@ export interface RuleOptions {
     casing?: CaseSensitivity;
     confirm?: ConfirmOptions;
     match?: MatchType;
+    normalizeApostrophes?: boolean;
     prefix?: string;
 }
 
