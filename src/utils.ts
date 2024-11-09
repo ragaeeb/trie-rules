@@ -1,4 +1,4 @@
-import { APOSTROPHE_LIKE_REGEX, LETTER_REGEX } from './constants';
+import { APOSTROPHE_LIKE_REGEX, LETTER_REGEX } from './constants.js';
 import {
     CaseSensitivity,
     ConfirmCallback,
@@ -7,7 +7,7 @@ import {
     SearchAndReplaceOptions,
     TrieNode,
     TriePattern,
-} from './types';
+} from './types.js';
 
 /**
  * Checks if the given character is a letter.

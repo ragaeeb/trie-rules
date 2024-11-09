@@ -1,5 +1,5 @@
-import { APOSTROPHE_LIKE_REGEX } from './constants';
-import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode, TriePattern } from './types';
+import { APOSTROPHE_LIKE_REGEX } from './constants.js';
+import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode, TriePattern } from './types.js';
 import {
     adjustClipping,
     generateCaseVariants,
@@ -7,7 +7,7 @@ import {
     insertWordIntoTrie,
     isConsidered,
     isValidMatch,
-} from './utils';
+} from './utils.js';
 
 /**
  * Builds a trie based on the provided rules.
