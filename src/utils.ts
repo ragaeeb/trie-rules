@@ -207,28 +207,31 @@ export const getReplacement = (params: {
     return replacement + replacementText;
 };
 
-export const adjustClipping = (text: string, endIndex: number, resultArray: string[], options: RuleOptions) => {
-    let indexAdjustment = endIndex;
+export const adjustClipping = (
+    text: string,
+    endIndex: number,
+    resultString: string,
+    options: RuleOptions,
+): { adjustedIndex: number; clippingIndex: number } => {
+    let adjustedIndex = endIndex;
+    let clippingIndex = resultString.length;
 
     if (options.clipStartPattern) {
         const regex = mapClipPatternToRegex(options.clipStartPattern);
-        const lastIndex = resultArray.length - 1;
-        if (lastIndex >= 0) {
-            const lastSegment = resultArray[lastIndex];
-            if (lastSegment && regex.test(lastSegment.charAt(lastSegment.length - 1))) {
-                resultArray[lastIndex] = lastSegment.slice(0, -1);
-            }
+        const lastChar = resultString.charAt(resultString.length - 1);
+        if (regex.test(lastChar)) {
+            clippingIndex--;
         }
     }
 
     if (options?.clipEndPattern) {
         const regex = mapClipPatternToRegex(options.clipEndPattern);
         if (regex.test(text.charAt(endIndex))) {
-            indexAdjustment++;
+            adjustedIndex++;
         }
     }
 
-    return indexAdjustment;
+    return { adjustedIndex, clippingIndex };
 };
 
 export const insertWordIntoTrie = (trie: TrieNode, word: string, target: string, options?: RuleOptions): void => {

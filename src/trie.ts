@@ -87,7 +87,7 @@ export const containsTarget = (trie: TrieNode, text: string, options: { caseInse
  * @returns {string} - The modified text.
  */
 export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAndReplaceOptions = {}): string => {
-    const resultArray: string[] = [];
+    let resultString = '';
     let i = 0;
     const textLength = text.length;
 
@@ -114,22 +114,28 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
                 options.log(lastValidMatch);
             }
 
-            resultArray.push(
-                getReplacement({
-                    endIndex,
-                    matchedNode,
-                    options,
-                    startIndex,
-                    text,
-                }),
-            );
+            const replacement = getReplacement({
+                endIndex,
+                matchedNode,
+                options,
+                startIndex,
+                text,
+            });
 
-            i = adjustClipping(text, endIndex, resultArray, matchedNode.options || {});
+            // Handle clipping adjustments
+            const { adjustedIndex, clippingIndex } = adjustClipping(
+                text,
+                endIndex,
+                resultString,
+                matchedNode.options || {},
+            );
+            resultString = resultString.slice(0, clippingIndex) + replacement;
+            i = adjustedIndex;
         } else {
-            resultArray.push(text[i]);
+            resultString += text[i];
             i++;
         }
     }
 
-    return resultArray.join('');
+    return resultString;
 };
