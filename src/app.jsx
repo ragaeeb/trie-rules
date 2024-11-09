@@ -24,12 +24,7 @@ export function App() {
     try {
       const parsedRules = JSON.parse(rules);
       const trie = buildTrie(parsedRules);
-      const replacedText = searchAndReplace(trie, text, {
-        confirmCallback: (options) => {
-          console.log("options", options);
-          return false;
-        },
-      });
+      const replacedText = searchAndReplace(trie, text);
       setText(replacedText);
     } catch (error) {
       alert("Error parsing rules or processing text: " + error.message);
@@ -38,7 +33,9 @@ export function App() {
 
   return (
     <div>
-      <h1>Trie-Rules v{packageInfo.dependencies["trie-rules"]} Demo</h1>
+      <h1>
+        ${packageInfo.name} v{packageInfo.dependencies["trie-rules"]} Demo
+      </h1>
       <div>
         <textarea
           value={rules}
