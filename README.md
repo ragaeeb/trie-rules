@@ -15,7 +15,16 @@
 
 # Introduction
 
-[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295) ![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules) ![npm](https://img.shields.io/npm/v/trie-rules) ![npm](https://img.shields.io/npm/dm/trie-rules) ![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules) ![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social) ![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/trie-rules) [![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules) [![Size](https://deno.bundlejs.com/badge?q=trie-rules@2.0.2&badge=detailed)](https://bundlejs.com/?q=trie-rules%402.0.2) ![typescript](https://badgen.net/badge/icon/typescript?icon=typescript&label&color=blue)
+[![wakatime](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295.svg)](https://wakatime.com/badge/user/a0b906ce-b8e7-4463-8bce-383238df6d4b/project/58624615-104c-4910-9245-ff6a17984295)
+![GitHub](https://img.shields.io/github/license/ragaeeb/trie-rules)
+![npm](https://img.shields.io/npm/v/trie-rules)
+![npm](https://img.shields.io/npm/dm/trie-rules)
+![GitHub issues](https://img.shields.io/github/issues/ragaeeb/trie-rules)
+![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social)
+![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/trie-rules)
+[![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules)
+[![Size](https://deno.bundlejs.com/badge?q=trie-rules@3.0.0&badge=detailed)](https://bundlejs.com/?q=trie-rules%403.0.0)
+![typescript](https://badgen.net/badge/icon/typescript?icon=typescript&label&color=blue)
 
 The `trie-rules` project is an efficient search and replace algorithm that performs replacements on any given text based on a predefined rule set.
 
@@ -35,22 +44,26 @@ npm install trie-rules
 yarn add trie-rules
 # or
 pnpm i trie-rules
+# or
+bun add trie-rules
 ```
 
 ## `buildTrie(rules: Rule[]): TrieNode`
 
-The `buildTrie` function constructs a trie data structure from an array of `rules`. This trie is used to efficiently search through text and replace specified source words with their corresponding target words.
+The `buildTrie` function constructs a trie data structure from an array of `rules`. This trie is used to efficiently search through text and replace specified source words with their corresponding to words.
 
 ### Parameters:
 
 -   `rules` (Array of `Rule` objects): Each `Rule` object should have the following properties:
-    -   `sources` (Array of strings): The words to search for in the text.
-    -   `target` (string): The word to replace the sources with in the text.
-    -   `options` (optional `RuleOption` object): Additional options for matching rules which may include:
-        -   `match` (optional string): Can be `'whole'` or `'alone'`, indicating how the match should be treated.
-            -   `'whole'`: The match should be on an entire word, not surrounded by other alphabet characters or special characters with diacritics. Punctuation or symbols around it are allowed.
-            -   `'alone'`: The match should only be considered when the text is surrounded by spaces.
-        -   `prefix` (optional string): A prefix that, if not present in the text, should be added to the target replacement.
+    -   `from` (Array of strings): The words to search for in the text.
+    -   `to` (string): The word to replace the from with in the text.
+    -   `options` (optional `RuleOption` object): Additional options for matching rules which may include: - `match` (optional `MatchType`): Determines how the match should be treated. - `MatchType.Whole`: The match should be on an entire word, not surrounded by other alphabet characters or special characters with diacritics. Punctuation or symbols around it are allowed. - `MatchType.Alone`: The match should only be considered when the text is surrounded by spaces. - `MatchType.Any` (default): The match can occur in any context without specific boundaries. - `prefix` (optional `string`): A prefix that, if not present in the text, should be added to the target replacement.
+        -   casing (optional CaseSensitivity): Determines how casing should be handled during replacement.
+            • CaseSensitivity.Insensitive: The replacement ignores original casing.
+            • CaseSensitivity.Sensitive: The replacement preserves the original casing.
+        -   clipStartPattern (optional `RegExp` | `TriePattern`): A pattern to determine characters to clip at the start of a match.
+        -   clipEndPattern (optional `RegExp` | `TriePattern`): A pattern to determine characters to clip at the end of a match.
+        -   confirm (optional `ConfirmOptions`): Conditions that must be met for the rule to be applied.
 
 ### Returns:
 
@@ -63,22 +76,32 @@ import { buildTrie } from './trie';
 
 const rules = [
     {
-        sources: ['example', 'sample'],
-        target: 'demo',
+        from: ['example', 'sample'],
+        to: 'demo',
     },
     {
-        sources: ['specificword'],
-        target: 'replacement',
+        from: ['specificword'],
+        to: 'replacement',
         options: {
             match: 'whole',
         },
     },
     {
-        sources: ['anotherword'],
-        target: 'substitute',
+        from: ['anotherword'],
+        to: 'substitute',
         options: {
             match: 'alone',
             prefix: 'pre-',
+        },
+    },
+    {
+        from: ['testword'],
+        to: 'tested',
+        options: {
+            casing: CaseSensitivity.Insensitive,
+            clipStartPattern: TriePattern.Apostrophes,
+            clipEndPattern: /[`'ʾʿ‘’]+$/,
+            confirm: { anyOf: ['condition1', 'condition2'] },
         },
     },
 ];
@@ -91,18 +114,22 @@ const trie = buildTrie(rules);
 Note:
 The function assumes case-sensitive matching. The trie constructed is optimized for the `searchAndReplace` function provided in the same library, and it may not be compatible with other search functions or trie implementations.
 
-## `searchAndReplace(trie: TrieNode, text: string): string`
+## `searchAndReplace(trie: TrieNode, text: string, options?: SearchAndReplaceOptions): string`
 
-The `searchAndReplace` function takes a trie data structure and a text string as inputs and searches the text for words that match any of the sources described in the trie. When a match is found, it replaces the word in the text with the corresponding target word from the trie.
+The `searchAndReplace` function takes a trie data structure and a text string as inputs and searches the text for words that match any of the from described in the trie. When a match is found, it replaces the word in the text with the corresponding to word from the trie.
 
 ### Parameters:
 
 -   `trie` (`TrieNode`): The trie data structure that should be used for the search-and-replace operation. This trie should be constructed using the `buildTrie` function.
 -   `text` (string): The text in which to search for and replace words.
+-   `options` (`SearchAndReplaceOptions`, optional): Additional options to customize the search and replace behavior.
+    • confirmCallback (ConfirmCallback): A callback function to determine whether a replacement should proceed based on confirmation options.
+    • log (function): A logging function that receives information about the current node being processed. Useful for debugging or tracking the replacement process.
+    • preformatters (TriePattern[]): An array of predefined patterns to preformat the input text before performing replacements. Useful for handling specific character patterns like apostrophes.
 
 ### Returns:
 
--   `string`: A new string with all occurrences of the source words replaced by their corresponding target words as defined by the rules in the trie.
+-   `string`: A new string with all occurrences of the source words replaced by their corresponding to words as defined by the rules in the trie.
 
 ### Usage:
 
@@ -126,25 +153,25 @@ const replacedText = searchAndReplace(trie, text);
 console.log(replacedText); // Outputs the text with 'example' and 'specificword' replaced by 'demo' and 'replacement', respectively.
 ```
 
-## `containsTarget(trie: TrieNode, target: string): boolean`
+## `containsTarget(trie: TrieNode, to: string): boolean`
 
-The `containsTarget` function checks whether a given target string is present as a replacement in the trie data structure.
+The `containsTarget` function checks whether a given to string is present as a replacement in the trie data structure.
 
 ### Parameters:
 
 -   `trie` (`TrieNode`): The trie data structure to search within. This trie should be constructed using the `buildTrie` function.
--   `target` (string): The target replacement string to search for in the trie.
+-   `to` (string): The to replacement string to search for in the trie.
 
 ### Returns:
 
--   `boolean`: Returns `true` if the target is present in the trie as a replacement, `false` otherwise.
+-   `boolean`: Returns `true` if the to is present in the trie as a replacement, `false` otherwise.
 
 ### Usage:
 
 ```js
 // Assuming trie is already built using buildTrie
 const targetExists = containsTarget(trie, 'demo');
-console.log(targetExists); // Outputs true if 'demo' is a target in the trie, false otherwise.
+console.log(targetExists); // Outputs true if 'demo' is a to in the trie, false otherwise.
 ```
 
 ## `containsSource(trie: TrieNode, source: string): boolean`
@@ -187,22 +214,22 @@ If the `confirmCallback` is not provided, the replacement will proceed as normal
 
 ### Example Usage:
 
-````js
+```js
 const rules = [
     {
-        target: 'Mālik',
-        sources: ['Maalik', 'Malik'],
+        to: 'Mālik',
+        from: ['Maalik', 'Malik'],
         options: { match: 'whole', confirm: { anyOf: ['مالك', 'مَالِكٍ', 'مَالِكٌ'] } },
     },
 ];
 
 const trie = buildTrie(rules);
 const text = 'Maalik went home.';
-const confirmCallback = options => options.anyOf.some(word => text.includes(word));
+const confirmCallback = (options) => options.anyOf.some((word) => text.includes(word));
 
 const replacedText = searchAndReplace(trie, text, { confirmCallback });
 console.log(replacedText); // Outputs: 'Mālik went home.'
-
+```
 
 # Performance
 
@@ -234,25 +261,23 @@ const boundedSource = (whole, source) => {
 };
 
 const reduceSourceToTarget =
-    ({ target, whole, caseless }) =>
+    ({ to, whole, caseless }) =>
     (full, source) => {
         const toReturn = { ...full };
         const wrappedSource = boundedSource(whole, source);
 
-        toReturn[wrappedSource] = target;
+        toReturn[wrappedSource] = to;
 
         if (caseless) {
-            toReturn[boundedSource(whole, sentenceCase(source))] =
-                Number(caseless) === 1 ? sentenceCase(target) : target;
-            toReturn[boundedSource(whole, source.toLowerCase())] =
-                Number(caseless) === 1 ? target.toLowerCase() : target;
+            toReturn[boundedSource(whole, sentenceCase(source))] = Number(caseless) === 1 ? sentenceCase(to) : to;
+            toReturn[boundedSource(whole, source.toLowerCase())] = Number(caseless) === 1 ? to.toLowerCase() : to;
         }
 
         return toReturn;
     };
 
 const reduceRuleToDictionary = (dictionary, rule) =>
-    rule.sources.split('|').reduce(reduceSourceToTarget(rule), dictionary);
+    rule.from.split('|').reduce(reduceSourceToTarget(rule), dictionary);
 
 describe('applyRules', () => {
     it('sentence with whole word and normal text', () => {
@@ -291,7 +316,7 @@ describe('applyRules', () => {
         expect(applyRules(dictionary, 'Al Imam')).toEqual('al-Imam');
     });
 });
-````
+```
 
 However this was very expensive to perform and it was increasingly complex to support custom rules as look-aheads and lookbacks can become more and more inefficient.
 
@@ -325,7 +350,7 @@ Let's analyze the runtime complexity of both functions separately:
 
 #### `buildTrie` Function
 
-The `buildTrie` function takes an array of rule objects, each with a `sources` array and a `target` string. For each source word in each rule, it inserts the word into the trie.
+The `buildTrie` function takes an array of rule objects, each with a `from` array and a `to` string. For each source word in each rule, it inserts the word into the trie.
 
 -   Let \( n \) be the number of rules.
 -   Let \( m \) be the average number of source words per rule.
@@ -356,11 +381,13 @@ In practice, the actual performance would depend on the specifics of the input d
 
 We conducted benchmarks on core functions using [ESBench](https://esbench.vercel.app/). The following results reflect the average time per operation on real-world data sets.
 
-| Function           | Time per operation (ns) | Standard Deviation (ns) |
-| ------------------ | ----------------------- | ----------------------- |
-| `buildTrie`        | 2,806,141.04 ns         | 43,405.06 ns            |
-| `containsSource`   | 79.45 ns                | 0.37 ns                 |
-| `containsTarget`   | 76,540.27 ns            | 1,454.30 ns             |
-| `searchAndReplace` | 74,314.29 ns            | 1,428.50 ns             |
+Text reporter: Format benchmark results of 1 suites:
+Suite: benchmark/trie-benchmark.ts
+| No. | Name | time | time.SD |
+| --: | ---------------: | --------------: | -----------: |
+| 0 | `buildTrie` | 2,767,130.81 ns | 12,732.94 ns |
+| 1 | `containsSource` | 81.69 ns | 0.22 ns |
+| 2 | `containsTarget` | 84,239.77 ns | 688.45 ns |
+| 3 | `searchAndReplace` | 71,031.31 ns | 95.09 ns |
 
-These benchmarks were performed on a `Apple M2 Pro` with `32GB RAM` specifications, using the `rules.json` sample data.
+These benchmarks were performed on a `Apple M2 Pro` with `32GB RAM` specifications, using the `testing/rules.json` sample data.
