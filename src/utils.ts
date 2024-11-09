@@ -1,4 +1,12 @@
-import { ClipStartPattern, ConfirmCallback, MatchType, RuleOptions } from './types';
+import {
+    CaseSensitivity,
+    ClipStartPattern,
+    ConfirmCallback,
+    MatchType,
+    RuleOptions,
+    SearchAndReplaceOptions,
+    TrieNode,
+} from './types';
 
 export const APOSTROPHE_LIKE_REGEX = /['’‘`ʾʿ]/;
 
@@ -7,6 +15,14 @@ const LETTER_REGEX = /\p{L}/u;
 
 export const isLetter = (char: string): boolean => {
     return LETTER_REGEX.test(char);
+};
+
+export const isUpperCase = (char: string): boolean => {
+    return char === char.toLocaleUpperCase() && char !== char.toLocaleLowerCase();
+};
+
+export const isLowerCase = (char: string): boolean => {
+    return char === char.toLocaleLowerCase() && char !== char.toLocaleUpperCase();
 };
 
 const isAlphabeticLetter = (char: string): boolean => {
@@ -36,8 +52,8 @@ export const generateCaseVariants = (source: string): string[] => {
     if (upperFirstChar === lowerFirstChar) {
         return [source];
     } else {
-        const prefix = source.substring(0, index);
-        const suffix = source.substring(index + 1);
+        const prefix = source.slice(0, index);
+        const suffix = source.slice(index + 1);
 
         const variantUpper = prefix + upperFirstChar + suffix;
         const variantLower = prefix + lowerFirstChar + suffix;
@@ -112,7 +128,15 @@ export const isConsidered = (ruleOptions?: RuleOptions, callback?: ConfirmCallba
     return true;
 };
 
-export function adjustCasing(matchedText: string, targetText: string): string {
+export const mapClipPatternToRegex = (pattern: ClipStartPattern | RegExp) => {
+    if (pattern === ClipStartPattern.Apostrophes) {
+        return APOSTROPHE_LIKE_REGEX;
+    }
+
+    return pattern as RegExp;
+};
+
+export const adjustCasing = (matchedText: string, targetText: string): string => {
     let result = '';
     let matchedIndex = 0;
     let targetIndex = 0;
@@ -155,20 +179,66 @@ export function adjustCasing(matchedText: string, targetText: string): string {
     }
 
     return result;
-}
+};
 
-function isUpperCase(char: string): boolean {
-    return char === char.toLocaleUpperCase() && char !== char.toLocaleLowerCase();
-}
+export const getReplacement = (params: {
+    endIndex: number;
+    matchedNode: TrieNode;
+    options: SearchAndReplaceOptions;
+    resultArray: string[];
+    startIndex: number;
+    text: string;
+}): string => {
+    const { endIndex, matchedNode, options, resultArray, startIndex, text } = params;
+    let replacement = '';
 
-function isLowerCase(char: string): boolean {
-    return char === char.toLocaleLowerCase() && char !== char.toLocaleUpperCase();
-}
-
-export const mapClipPatternToRegex = (pattern: ClipStartPattern | RegExp) => {
-    if (pattern === ClipStartPattern.Apostrophes) {
-        return APOSTROPHE_LIKE_REGEX;
+    if (options.log) {
+        options.log({ node: matchedNode });
     }
 
-    return pattern as RegExp;
+    // Handle prefix option
+    if (matchedNode.options?.prefix) {
+        const prefixLength = matchedNode.options.prefix.length;
+        const startOfPrefix = startIndex - prefixLength;
+        const hasPrefix = startOfPrefix >= 0 && text.slice(startOfPrefix, startIndex) === matchedNode.options.prefix;
+        if (!hasPrefix) {
+            replacement += matchedNode.options.prefix;
+        }
+    }
+
+    // Handle clipStartPattern
+    if (matchedNode.options?.clipStartPattern) {
+        const regex = mapClipPatternToRegex(matchedNode.options.clipStartPattern);
+        const lastIndex = resultArray.length - 1;
+        if (lastIndex >= 0) {
+            const lastSegment = resultArray[lastIndex];
+            if (lastSegment && regex.test(lastSegment.charAt(lastSegment.length - 1))) {
+                resultArray[lastIndex] = lastSegment.slice(0, -1);
+            }
+        }
+    }
+
+    // Determine whether to adjust casing based on the 'casing' option
+    let replacementText = matchedNode.target;
+    const casingOption = matchedNode.options?.casing;
+
+    if (casingOption === CaseSensitivity.Insensitive) {
+        const matchedText = text.slice(startIndex, endIndex);
+        replacementText = adjustCasing(matchedText, matchedNode.target as string);
+    }
+
+    return replacement + replacementText;
+};
+
+export const insertWordIntoTrie = (trie: TrieNode, word: string, target: string, options?: RuleOptions): void => {
+    let node = trie;
+    for (const char of word) {
+        if (!node[char]) {
+            node[char] = {};
+        }
+        node = node[char] as TrieNode;
+    }
+    node.isEndOfWord = true;
+    node.target = target;
+    node.options = options;
 };

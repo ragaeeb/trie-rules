@@ -1,5 +1,12 @@
-import { CaseSensitivity, Rule, RuleOptions, SearchAndReplaceOptions, TrieNode } from './types';
-import { adjustCasing, generateCaseVariants, isConsidered, isValidMatch, mapClipPatternToRegex } from './utils';
+import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode } from './types';
+import {
+    generateCaseVariants,
+    getReplacement,
+    insertWordIntoTrie,
+    isConsidered,
+    isValidMatch,
+    mapClipPatternToRegex,
+} from './utils';
 
 /**
  * Builds a trie based on the provided rules.
@@ -24,19 +31,6 @@ export const buildTrie = (rules: Rule[]): TrieNode => {
 
     return trie;
 };
-
-function insertWordIntoTrie(trie: TrieNode, word: string, target: string, options?: RuleOptions): void {
-    let node = trie;
-    for (const char of word) {
-        if (!node[char]) {
-            node[char] = {};
-        }
-        node = node[char] as TrieNode;
-    }
-    node.isEndOfWord = true;
-    node.target = target;
-    node.options = options;
-}
 
 /**
  * Checks if a source exists in the trie.
@@ -122,22 +116,25 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
         if (lastValidMatch) {
             const { endIndex, node: matchedNode, startIndex } = lastValidMatch;
 
-            // Use a reference to i so that getReplacement can update it
-            const iRef = { value: endIndex };
+            resultArray.push(
+                getReplacement({
+                    endIndex,
+                    matchedNode,
+                    options,
+                    resultArray,
+                    startIndex,
+                    text,
+                }),
+            );
 
-            // Handle the match
-            const replacement = getReplacement({
-                endIndex,
-                iRef,
-                matchedNode,
-                options,
-                resultArray,
-                startIndex,
-                text,
-            });
-
-            resultArray.push(replacement);
-            i = iRef.value; // Update i based on any adjustments
+            if (matchedNode.options?.clipEndPattern) {
+                const regex = mapClipPatternToRegex(matchedNode.options.clipEndPattern);
+                if (regex.test(text.charAt(endIndex))) {
+                    i = endIndex + 1;
+                }
+            } else {
+                i = endIndex;
+            }
         } else {
             resultArray.push(text[i]);
             i++;
@@ -146,67 +143,3 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
 
     return resultArray.join('');
 };
-
-function getReplacement(params: {
-    endIndex: number;
-    iRef: { value: number }; // Reference to i
-    matchedNode: TrieNode;
-    options: SearchAndReplaceOptions;
-    resultArray: string[];
-    startIndex: number;
-    text: string;
-}): string {
-    const { endIndex, iRef, matchedNode, options, resultArray, startIndex, text } = params;
-    let replacement = '';
-
-    if (options.log) {
-        options.log({ node: matchedNode });
-    }
-
-    // Handle prefix option
-    if (matchedNode.options?.prefix) {
-        const prefixLength = matchedNode.options.prefix.length;
-        const startOfPrefix = startIndex - prefixLength;
-        const hasPrefix = startOfPrefix >= 0 && text.slice(startOfPrefix, startIndex) === matchedNode.options.prefix;
-        if (!hasPrefix) {
-            replacement += matchedNode.options.prefix;
-        }
-    }
-
-    // Handle clipStartPattern
-    if (matchedNode.options?.clipStartPattern) {
-        const regex = mapClipPatternToRegex(matchedNode.options.clipStartPattern);
-        const lastIndex = resultArray.length - 1;
-        if (lastIndex >= 0) {
-            const lastSegment = resultArray[lastIndex];
-            if (lastSegment && regex.test(lastSegment.charAt(lastSegment.length - 1))) {
-                resultArray[lastIndex] = lastSegment.slice(0, -1);
-            }
-        }
-    }
-
-    // Determine whether to adjust casing based on the 'casing' option
-    let replacementText = matchedNode.target;
-    const casingOption = matchedNode.options?.casing;
-
-    if (casingOption === CaseSensitivity.Insensitive) {
-        const matchedText = text.slice(startIndex, endIndex);
-        replacementText = adjustCasing(matchedText, matchedNode.target as string);
-    }
-
-    replacement += replacementText;
-
-    // Handle clipEndPattern
-    let adjustedEndIndex = endIndex;
-    if (matchedNode.options?.clipEndPattern) {
-        const regex = mapClipPatternToRegex(matchedNode.options.clipEndPattern);
-        if (regex.test(text.charAt(endIndex))) {
-            adjustedEndIndex = endIndex + 1; // Skip the character
-        }
-    }
-
-    // Update iRef to the adjusted end index
-    iRef.value = adjustedEndIndex;
-
-    return replacement;
-}
