@@ -1,11 +1,11 @@
 import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode } from './types';
 import {
+    adjustClipping,
     generateCaseVariants,
     getReplacement,
     insertWordIntoTrie,
     isConsidered,
     isValidMatch,
-    mapClipPatternToRegex,
 } from './utils';
 
 /**
@@ -110,25 +110,21 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
         if (lastValidMatch) {
             const { endIndex, node: matchedNode, startIndex } = lastValidMatch;
 
+            if (options.log) {
+                options.log(lastValidMatch);
+            }
+
             resultArray.push(
                 getReplacement({
                     endIndex,
                     matchedNode,
                     options,
-                    resultArray,
                     startIndex,
                     text,
                 }),
             );
 
-            i = endIndex;
-
-            if (matchedNode.options?.clipEndPattern) {
-                const regex = mapClipPatternToRegex(matchedNode.options.clipEndPattern);
-                if (regex.test(text.charAt(endIndex))) {
-                    i++;
-                }
-            }
+            i = adjustClipping(text, endIndex, resultArray, matchedNode.options || {});
         } else {
             resultArray.push(text[i]);
             i++;
