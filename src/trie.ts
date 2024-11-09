@@ -1,4 +1,5 @@
-import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode } from './types';
+import { APOSTROPHE_LIKE_REGEX } from './constants';
+import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode, TriePattern } from './types';
 import {
     adjustClipping,
     generateCaseVariants,
@@ -84,19 +85,32 @@ export const containsTarget = (trie: TrieNode, text: string, options: { caseInse
 
 /**
  * Searches for and replaces text based on the provided trie.
- * @returns {string} - The modified text.
+ * @param {TrieNode} trie - The trie constructed from rules.
+ * @param {string} textToFormat - The input text to search and replace.
+ * @param {SearchAndReplaceOptions} options - Optional configurations for search and replace.
+ * @returns {string} The modified text after replacements.
  */
-export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAndReplaceOptions = {}): string => {
+export const searchAndReplace = (
+    trie: TrieNode,
+    textToFormat: string,
+    options: SearchAndReplaceOptions = {},
+): string => {
     let resultString = '';
     let i = 0;
-    const textLength = text.length;
+    let text = textToFormat;
 
-    while (i < textLength) {
+    if (options.preformatters) {
+        if (options.preformatters.includes(TriePattern.Apostrophes)) {
+            text = text.replace(APOSTROPHE_LIKE_REGEX, "'");
+        }
+    }
+
+    while (i < text.length) {
         let node: TrieNode = trie;
         let j = i;
         let lastValidMatch: { endIndex: number; node: TrieNode; startIndex: number } | null = null;
 
-        while (j < textLength && node[text[j]]) {
+        while (j < text.length && node[text[j]]) {
             node = node[text[j]] as TrieNode;
             j++;
 

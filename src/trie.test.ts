@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
-import { CaseSensitivity, ClipStartPattern, MatchType, Rule, TrieNode } from './types';
+import { CaseSensitivity, MatchType, Rule, TrieNode, TriePattern } from './types';
 
 describe('trie', () => {
     let rules: Rule[] = [];
@@ -835,7 +835,7 @@ describe('trie', () => {
                 rules = [
                     {
                         from: ["'Umar", 'Umar'],
-                        options: { clipApostrophes: true, match: MatchType.Whole },
+                        options: { clipStartPattern: TriePattern.Apostrophes, match: MatchType.Whole },
                         to: 'ʿUmar',
                     },
                 ];
@@ -846,13 +846,30 @@ describe('trie', () => {
                 expect(searchAndReplace(trie, `I spoke to Umar`)).toEqual(`I spoke to ʿUmar`);
             });
 
+            it('should flatten apostrophes with the preformatter', () => {
+                rules = [
+                    {
+                        from: ["Ka'bah"],
+                        to: 'Kaʿbah',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(
+                    searchAndReplace(trie, `We went by the Ka’bah yesterday.`, {
+                        preformatters: [TriePattern.Apostrophes],
+                    }),
+                ).toEqual(`We went by the Kaʿbah yesterday.`);
+            });
+
             it('should handle both rules with and without normalizeApostrophes', () => {
                 rules = [
                     {
                         from: ["'Umar", 'Umar'],
                         options: {
                             casing: CaseSensitivity.Insensitive,
-                            clipStartPattern: ClipStartPattern.Apostrophes,
+                            clipStartPattern: TriePattern.Apostrophes,
                             match: MatchType.Whole,
                         },
                         to: 'ʿUmar',
