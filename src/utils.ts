@@ -196,7 +196,6 @@ export const getReplacement = (params: {
         options.log({ node: matchedNode });
     }
 
-    // Handle prefix option
     if (matchedNode.options?.prefix) {
         const prefixLength = matchedNode.options.prefix.length;
         const startOfPrefix = startIndex - prefixLength;
@@ -206,7 +205,6 @@ export const getReplacement = (params: {
         }
     }
 
-    // Handle clipStartPattern
     if (matchedNode.options?.clipStartPattern) {
         const regex = mapClipPatternToRegex(matchedNode.options.clipStartPattern);
         const lastIndex = resultArray.length - 1;

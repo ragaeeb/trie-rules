@@ -101,14 +101,8 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
             j++;
 
             if (node.isEndOfWord) {
-                const startIndex = i;
-                const endIndex = j;
-
-                if (
-                    isValidMatch(text, startIndex, endIndex, node.options) &&
-                    isConsidered(node.options, options.confirmCallback)
-                ) {
-                    lastValidMatch = { endIndex, node, startIndex };
+                if (isValidMatch(text, i, j, node.options) && isConsidered(node.options, options.confirmCallback)) {
+                    lastValidMatch = { endIndex: j, node, startIndex: i };
                 }
             }
         }
@@ -127,13 +121,13 @@ export const searchAndReplace = (trie: TrieNode, text: string, options: SearchAn
                 }),
             );
 
+            i = endIndex;
+
             if (matchedNode.options?.clipEndPattern) {
                 const regex = mapClipPatternToRegex(matchedNode.options.clipEndPattern);
                 if (regex.test(text.charAt(endIndex))) {
-                    i = endIndex + 1;
+                    i++;
                 }
-            } else {
-                i = endIndex;
             }
         } else {
             resultArray.push(text[i]);
