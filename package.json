@@ -1,6 +1,6 @@
 {
     "name": "trie-rules",
-    "version": "3.0.2",
+    "version": "3.1.0",
     "description": "Performs fast search and replace on a text based on a set of rules.",
     "main": "dist/main.js",
     "types": "dist/index.d.ts",
