@@ -23,7 +23,7 @@
 ![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social)
 ![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/trie-rules)
 [![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules)
-[![Size](https://deno.bundlejs.com/badge?q=trie-rules@3.0.0&badge=detailed)](https://bundlejs.com/?q=trie-rules%403.0.0)
+[![Size](https://deno.bundlejs.com/badge?q=trie-rules@3.0.1&badge=detailed)](https://bundlejs.com/?q=trie-rules%403.0.1)
 ![typescript](https://badgen.net/badge/icon/typescript?icon=typescript&label&color=blue)
 
 The `trie-rules` project is an efficient search and replace algorithm that performs replacements on any given text based on a predefined rule set.
@@ -72,7 +72,7 @@ The `buildTrie` function constructs a trie data structure from an array of `rule
 ### Usage:
 
 ```js
-import { buildTrie } from './trie';
+import { buildTrie, MatchType, CaseSensitivity, TriePattern } from './trie-rules';
 
 const rules = [
     {
@@ -83,14 +83,14 @@ const rules = [
         from: ['specificword'],
         to: 'replacement',
         options: {
-            match: 'whole',
+            match: MatchType.Whole,
         },
     },
     {
         from: ['anotherword'],
         to: 'substitute',
         options: {
-            match: 'alone',
+            match: MatchType.Alone,
             prefix: 'pre-',
         },
     },

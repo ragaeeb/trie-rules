@@ -20,17 +20,17 @@ export interface ConfirmCallback {
  * Enumerates the types of matches that can be performed.
  */
 export enum MatchType {
-    Alone = 'alone', // The rule should match the word when it appears alone, surrounded by whitespace.
-    Any = 'any', // The rule should match the word in any context, regardless of surrounding characters.
-    Whole = 'whole', // The rule should match the word as a whole, ensuring it is not part of a larger word.
+    Alone = 'a', // The rule should match the word when it appears alone, surrounded by whitespace.
+    Any = '', // The rule should match the word in any context, regardless of surrounding characters.
+    Whole = 'w', // The rule should match the word as a whole, ensuring it is not part of a larger word.
 }
 
 /**
  * Enumerates the case sensitivity options for matching and replacement.
  */
 export enum CaseSensitivity {
-    Insensitive = 'insensitive', // The matching is case-insensitive, and replacement should take into account the case of the initial of the "from". If the "from" starts with a capital (ignoring all symbols), then so will the replacement.
-    Sensitive = 'sensitive', // The matching is case-sensitive, so the replacement's first initial will not reflect the initial casing of the first letter of the "from"
+    Insensitive = 'i', // The matching is case-insensitive, and replacement should take into account the case of the initial of the "from". If the "from" starts with a capital (ignoring all symbols), then so will the replacement.
+    Sensitive = '', // The matching is case-sensitive, so the replacement's first initial will not reflect the initial casing of the first letter of the "from"
 }
 
 /**
