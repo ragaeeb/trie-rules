@@ -905,6 +905,24 @@ describe('trie', () => {
                 );
             });
 
+            it('should handle rule with both clipping start and end apostrophes', () => {
+                rules = [
+                    {
+                        from: ['Ulama', 'Ulamaa', 'Ulema', 'Ulemaa', 'ulamā'],
+                        options: {
+                            clipEndPattern: TriePattern.Apostrophes,
+                            clipStartPattern: TriePattern.Apostrophes,
+                            prefix: '',
+                        },
+                        to: 'ʿulamāʾ',
+                    },
+                ];
+
+                trie = buildTrie(rules);
+
+                expect(searchAndReplace(trie, `'ulamā' padded`)).toEqual(`ʿulamāʾ padded`);
+            });
+
             describe('CaseSensitivity', () => {
                 it('should handle case insensitive matches', () => {
                     rules = [

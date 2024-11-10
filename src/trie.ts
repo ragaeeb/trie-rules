@@ -101,7 +101,7 @@ export const searchAndReplace = (
 
     if (options.preformatters) {
         if (options.preformatters.includes(TriePattern.Apostrophes)) {
-            text = text.replace(APOSTROPHE_LIKE_REGEX, "'");
+            text = text.replace(new RegExp(APOSTROPHE_LIKE_REGEX, 'g'), "'");
         }
     }
 

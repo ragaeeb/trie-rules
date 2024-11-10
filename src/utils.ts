@@ -41,7 +41,7 @@ export const isLowerCase = (char: string): boolean => {
  * @param {string} char - The character to check.
  * @returns {boolean} True if the character is an alphabetic letter, false otherwise.
  */
-const isAlphabeticLetter = (char: string): boolean => {
+export const isAlphabeticLetter = (char: string): boolean => {
     return LETTER_REGEX.test(char) && !APOSTROPHE_LIKE_REGEX.test(char);
 };
 
@@ -50,7 +50,7 @@ const isAlphabeticLetter = (char: string): boolean => {
  * @param {string} str - The string to search.
  * @returns {number} The index of the first alphabetic letter, or -1 if none found.
  */
-const findFirstAlphaIndex = (str: string): number => {
+export const findFirstAlphaIndex = (str: string): number => {
     for (let i = 0; i < str.length; i++) {
         const char = str[i];
         if (isAlphabeticLetter(char)) {
@@ -281,16 +281,16 @@ export const adjustClipping = (
 
     if (options.clipStartPattern) {
         const regex = mapTriePatternToRegex(options.clipStartPattern);
-        const lastChar = resultString.charAt(resultString.length - 1);
 
-        if (regex.test(lastChar)) {
+        if (regex.test(resultString.at(-1) as string)) {
             clippingIndex--;
         }
     }
 
     if (options?.clipEndPattern) {
         const regex = mapTriePatternToRegex(options.clipEndPattern);
-        if (regex.test(text.charAt(endIndex))) {
+
+        if (regex.test(text.at(endIndex) as string)) {
             adjustedIndex++;
         }
     }
