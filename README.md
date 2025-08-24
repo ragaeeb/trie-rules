@@ -23,7 +23,7 @@
 ![GitHub stars](https://img.shields.io/github/stars/ragaeeb/trie-rules?style=social)
 ![GitHub Release](https://img.shields.io/github/v/release/ragaeeb/trie-rules)
 [![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules)
-[![Size](https://deno.bundlejs.com/badge?q=trie-rules@3.1.0&badge=detailed)](https://bundlejs.com/?q=trie-rules%403.1.0)
+[![Size](https://deno.bundlejs.com/badge?q=trie-rules@latest&badge=detailed)](https://bundlejs.com/?q=trie-rules%40latest)
 ![typescript](https://badgen.net/badge/icon/typescript?icon=typescript&label&color=blue)
 
 The `trie-rules` project is an efficient search and replace algorithm that performs replacements on any given text based on a predefined rule set.
@@ -57,13 +57,18 @@ The `buildTrie` function constructs a trie data structure from an array of `rule
 - `rules` (Array of `Rule` objects): Each `Rule` object should have the following properties:
     - `from` (Array of strings): The words to search for in the text.
     - `to` (string): The word to replace the from with in the text.
-    - `options` (optional `RuleOption` object): Additional options for matching rules which may include: - `match` (optional `MatchType`): Determines how the match should be treated. - `MatchType.Whole`: The match should be on an entire word, not surrounded by other alphabet characters or special characters with diacritics. Punctuation or symbols around it are allowed. - `MatchType.Alone`: The match should only be considered when the text is surrounded by spaces. - `MatchType.Any` (default): The match can occur in any context without specific boundaries. - `prefix` (optional `string`): A prefix that, if not present in the text, should be added to the target replacement.
-        - casing (optional CaseSensitivity): Determines how casing should be handled during replacement.
-          • CaseSensitivity.Insensitive: The replacement ignores original casing.
-          • CaseSensitivity.Sensitive: The replacement preserves the original casing.
-        - clipStartPattern (optional `RegExp` | `TriePattern`): A pattern to determine characters to clip at the start of a match.
-        - clipEndPattern (optional `RegExp` | `TriePattern`): A pattern to determine characters to clip at the end of a match.
-        - confirm (optional `ConfirmOptions`): Conditions that must be met for the rule to be applied.
+    - `options` (optional `RuleOptions`):
+        - `match` (optional `MatchType`):
+            - `MatchType.Whole`: The match must be a whole word (letters/diacritics around it disallowed; punctuation/symbols allowed).
+            - `MatchType.Alone`: The match must be surrounded by whitespace.
+            - `MatchType.Any` (default): Match in any context.
+        - `prefix` (optional `string`): If absent in text, add this before the replacement.
+        - `casing` (optional `CaseSensitivity`):
+            - `CaseSensitivity.Insensitive`: Adjust replacement letter casing to input.
+            - `CaseSensitivity.Sensitive`: Preserve replacement casing as-is.
+        - `clipStartPattern` (optional `RegExp` | `TriePattern`): Characters to trim immediately before the match.
+        - `clipEndPattern` (optional `RegExp` | `TriePattern`): Characters to trim immediately after the match.
+        - `confirm` (optional `ConfirmOptions`): Conditions that must be met for the rule to apply.
 - `options` (optional `BuildTrieOptions`): Global options for the trie:
     - `normalizeApostrophes` (optional `boolean`): When true, treats all apostrophe-like characters as equivalent during matching. This allows a rule with "don't" to match variants like "don't", "don`t", etc. Normalization is applied to rule sources during build time and to input text during search time. Defaults to false.
 
@@ -74,7 +79,7 @@ The `buildTrie` function constructs a trie data structure from an array of `rule
 ### Usage:
 
 ```js
-import { buildTrie, MatchType, CaseSensitivity, TriePattern } from './trie-rules';
+import { buildTrie, MatchType, CaseSensitivity, TriePattern } from 'trie-rules';
 
 const rules = [
     {
@@ -144,7 +149,7 @@ The `searchAndReplace` function takes a trie data structure and a text string as
 ### Usage:
 
 ```js
-import { buildTrie, searchAndReplace } from './trie';
+import { buildTrie, searchAndReplace } from 'trie';
 
 // Define your rules
 const rules = [
@@ -251,11 +256,12 @@ console.log(replacedText); // Outputs: 'Mālik went home.'
 
 The `normalizeApostrophes` feature allows for flexible matching of words containing apostrophe-like characters. When enabled, the following characters are treated as equivalent:
 
-- Standard apostrophe: `'`
-- Curly apostrophe: `'`
-- Backtick: `` ` ``
-- Arabic hamza above: `ʾ`
-- Arabic ain: `ʿ`
+- Standard apostrophe: ' (U+0027)
+- Curly apostrophe: ’ (U+2019)
+- Backtick: ` (U+0060)
+- Modifier letter apostrophe: ʼ (U+02BC)
+- Arabic hamza above: ʾ (U+02BE)
+- Arabic ain: ʿ (U+02BF)
 
 ### Example Usage:
 

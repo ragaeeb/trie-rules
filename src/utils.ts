@@ -106,7 +106,6 @@ export const isWordCharacterAt = (text: string, index: number): boolean => {
 
         // Only consider it part of a word if it's BETWEEN true letters
         if (isAlphabeticLetter(prevChar) && isAlphabeticLetter(nextChar)) {
-            // Optional: keep the possessive "'s" carve-out only for the ASCII apostrophe
             if (char === "'" && nextChar.toLowerCase() === 's' && !isAlphabeticLetter(text.charAt(index + 2))) {
                 return false;
             }

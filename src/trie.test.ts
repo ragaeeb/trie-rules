@@ -855,6 +855,13 @@ describe('trie', () => {
                         `We went by the Kaʿbah yesterday.`,
                     );
                 });
+
+                it('should handle modifier letter apostrophe (U+02BC)', () => {
+                    const trie = buildTrie([{ from: ["Ka'bah"], to: 'Kaʿbah' }], { normalizeApostrophes: true });
+                    expect(searchAndReplace(trie, 'We visited the Kaʼbah yesterday.')).toEqual(
+                        'We visited the Kaʿbah yesterday.',
+                    );
+                });
             });
 
             it('should handle words starting with an apostrophe', () => {

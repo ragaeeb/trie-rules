@@ -2,17 +2,21 @@
     "name": "trie-rules",
     "version": "3.2.0",
     "description": "Performs fast search and replace on a text based on a set of rules.",
-    "main": "dist/main.js",
+    "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "source": "src/index.ts",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ragaeeb/trie-rules.git"
     },
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
     "files": [
-        "dist/main.js",
-        "dist/main.js.map",
-        "dist/*.d.ts"
+        "dist/**"
     ],
     "private": false,
     "type": "module",

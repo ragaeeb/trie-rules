@@ -106,15 +106,9 @@ export const containsTarget = (trie: TrieNode, text: string, options: { caseInse
  * @param {SearchAndReplaceOptions} options - Optional configurations for search and replace.
  * @returns {string} The modified text after replacements.
  */
-export const searchAndReplace = (
-    trie: TrieNode,
-    textToFormat: string,
-    searchOptions: SearchAndReplaceOptions = {},
-): string => {
+export const searchAndReplace = (trie: TrieNode, text: string, searchOptions: SearchAndReplaceOptions = {}): string => {
     let resultString = '';
     let i = 0;
-    const text = textToFormat;
-
     const normalizeApostrophes = Boolean(trie.buildOptions?.normalizeApostrophes);
 
     while (i < text.length) {

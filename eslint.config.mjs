@@ -9,6 +9,7 @@ export default tseslint.config(
     tseslint.configs.recommended,
     perfectionist.configs['recommended-natural'],
     { languageOptions: { ecmaVersion: 'latest',   globals: { ...globals.nodeBuiltin, Bun: 'readonly'}, sourceType: 'module' } },
+    { ignores: ['dist', 'coverage'] },
     eslintConfigPrettier,
     {
         rules: {
