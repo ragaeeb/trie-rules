@@ -860,16 +860,22 @@ describe('trie', () => {
             it('should handle words starting with an apostrophe', () => {
                 rules = [
                     {
-                        from: ["'Umar", 'Umar'],
+                        from: ['Umar'],
                         options: { clipStartPattern: TriePattern.Apostrophes, match: MatchType.Whole },
                         to: 'ʿUmar',
+                    },
+                    {
+                        from: ['Ubayd'],
+                        options: { clipStartPattern: TriePattern.Apostrophes, match: MatchType.Whole },
+                        to: 'ʿUbayd',
                     },
                 ];
 
                 trie = buildTrie(rules);
 
                 expect(searchAndReplace(trie, `'Umar's wisdom`)).toEqual(`ʿUmar's wisdom`);
-                expect(searchAndReplace(trie, `I spoke to Umar`)).toEqual(`I spoke to ʿUmar`);
+                expect(searchAndReplace(trie, `I spoke to 'Umar`)).toEqual(`I spoke to ʿUmar`);
+                expect(searchAndReplace(trie, `I spoke to ʻʿUbayd`)).toEqual(`I spoke to ʿUbayd`);
             });
 
             it('should handle both rules with and without normalizeApostrophes', () => {
