@@ -1,11 +1,11 @@
 import { APOSTROPHE_LIKE_REGEX, LETTER_REGEX } from './constants.js';
 import {
     CaseSensitivity,
-    ConfirmCallback,
+    type ConfirmCallback,
     MatchType,
-    RuleOptions,
-    SearchAndReplaceOptions,
-    TrieNode,
+    type RuleOptions,
+    type SearchAndReplaceOptions,
+    type TrieNode,
     TriePattern,
 } from './types.js';
 
@@ -307,6 +307,7 @@ export const adjustClipping = (
  */
 export const insertWordIntoTrie = (trie: TrieNode, word: string, target: string, options?: RuleOptions): void => {
     let node = trie;
+
     for (const char of word) {
         if (!node[char]) {
             node[char] = {};

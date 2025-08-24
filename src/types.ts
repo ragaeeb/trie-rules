@@ -1,19 +1,9 @@
 /**
- * Options for confirmation callbacks.
- * Specifies conditions under which a rule should be confirmed.
+ * Enumerates the case sensitivity options for matching and replacement.
  */
-interface ConfirmOptions {
-    anyOf: string[];
-}
-
-/**
- * A callback function used to determine if a rule should be considered based on confirmation options.
- *
- * @param confirmOptions - The options specifying the conditions for confirmation.
- * @returns A boolean indicating whether the rule is considered (true) or not (false).
- */
-export interface ConfirmCallback {
-    (confirmOptions: ConfirmOptions): boolean;
+export enum CaseSensitivity {
+    Insensitive = 'i', // The matching is case-insensitive, and replacement should take into account the case of the initial of the "from". If the "from" starts with a capital (ignoring all symbols), then so will the replacement.
+    Sensitive = '', // The matching is case-sensitive, so the replacement's first initial will not reflect the initial casing of the first letter of the "from"
 }
 
 /**
@@ -26,24 +16,60 @@ export enum MatchType {
 }
 
 /**
- * Enumerates the case sensitivity options for matching and replacement.
- */
-export enum CaseSensitivity {
-    Insensitive = 'i', // The matching is case-insensitive, and replacement should take into account the case of the initial of the "from". If the "from" starts with a capital (ignoring all symbols), then so will the replacement.
-    Sensitive = '', // The matching is case-sensitive, so the replacement's first initial will not reflect the initial casing of the first letter of the "from"
-}
-
-/**
- * Enumerates predefined patterns for clipping and preformatting during search and replace operations.
+ * Enumerates predefined patterns for clipping during search and replace operations.
  */
 export enum TriePattern {
     Apostrophes = 'apostrophes', // Represents apostrophe-like characters used in word boundaries or contractions
 }
 
 /**
+ * Options that apply to the trie globally.
+ */
+export type BuildTrieOptions = {
+    /**
+     * When true, treats all apostrophe-like characters as equivalent during matching.
+     * This allows a rule with "don't" to match "don‘t", "don't", "don`t", etc.
+     */
+    normalizeApostrophes?: boolean;
+};
+
+/**
+ * A callback function used to determine if a rule should be considered based on confirmation options.
+ *
+ * @param confirmOptions - The options specifying the conditions for confirmation.
+ * @returns A boolean indicating whether the rule is considered (true) or not (false).
+ */
+export type ConfirmCallback = {
+    (confirmOptions: ConfirmOptions): boolean;
+};
+
+/**
+ * Represents a single search and replace rule.
+ * Defines the source words to search for and the target replacement.
+ */
+export type Rule = {
+    /**
+     * An array of strings representing the words or patterns to search for.
+     * Each string in the array is treated as an individual search target.
+     */
+    from: string[];
+
+    /**
+     * Options that modify the behavior of the rule, such as casing and clipping.
+     */
+    options?: RuleOptions;
+
+    /**
+     * The target string to replace the matched source words with.
+     * Can include additional formatting or contextual information.
+     */
+    to: string;
+};
+
+/**
  * Options that define how a rule behaves during search and replace operations.
  */
-export interface RuleOptions {
+export type RuleOptions = {
     /**
      * Specifies how casing should be handled during replacement.
      * Defaults to case-sensitive if not provided.
@@ -78,64 +104,7 @@ export interface RuleOptions {
      * Useful for maintaining consistent formatting or adding necessary context.
      */
     prefix?: string;
-}
-
-/**
- * Represents a single search and replace rule.
- * Defines the source words to search for and the target replacement.
- */
-export interface Rule {
-    /**
-     * An array of strings representing the words or patterns to search for.
-     * Each string in the array is treated as an individual search target.
-     */
-    from: string[];
-
-    /**
-     * Options that modify the behavior of the rule, such as casing and clipping.
-     */
-    options?: RuleOptions;
-
-    /**
-     * The target string to replace the matched source words with.
-     * Can include additional formatting or contextual information.
-     */
-    to: string;
-}
-
-/**
- * Represents a node within a trie data structure used for efficient search and replace operations.
- */
-export interface TrieNode {
-    /**
-     * An index signature allowing dynamic properties.
-     * Each key represents a character, and the value can be:
-     * - A boolean indicating if it's the end of a word.
-     * - RuleOptions modifying the rule's behavior.
-     * - A string representing the target replacement.
-     * - Another TrieNode for nested characters.
-     * - Undefined if the character path does not exist.
-     */
-    [key: string]: boolean | RuleOptions | string | TrieNode | undefined;
-
-    /**
-     * Indicates whether the current node marks the end of a complete word.
-     * Useful for determining when a match is found.
-     */
-    isEndOfWord?: boolean;
-
-    /**
-     * Options associated with the rule at this node.
-     * Can modify behavior such as casing, clipping, and matching types.
-     */
-    options?: RuleOptions;
-
-    /**
-     * The target replacement string for the rule at this node.
-     * Defines what the matched word should be replaced with.
-     */
-    target?: string;
-}
+};
 
 /**
  * Options for configuring search and replace operations.
@@ -154,10 +123,52 @@ export type SearchAndReplaceOptions = {
      * @param params - An object containing the current TrieNode.
      */
     log?({ node }: { node: TrieNode }): void;
+};
+
+/**
+ * Represents a node within a trie data structure used for efficient search and replace operations.
+ */
+export type TrieNode = {
+    /**
+     * An index signature allowing dynamic properties.
+     * Each key represents a character, and the value can be:
+     * - A boolean indicating if it's the end of a word.
+     * - RuleOptions modifying the rule's behavior.
+     * - A string representing the target replacement.
+     * - Another TrieNode for nested characters.
+     * - Undefined if the character path does not exist.
+     */
+    [key: string]: boolean | BuildTrieOptions | RuleOptions | string | TrieNode | undefined;
 
     /**
-     * An array of predefined patterns to preformat the input text before performing replacements.
-     * Useful for handling specific character patterns like apostrophes.
+     * Build options stored at the trie root to be used during search operations.
+     * Only present on the root node.
      */
-    preformatters?: TriePattern[];
+    buildOptions?: BuildTrieOptions;
+
+    /**
+     * Indicates whether the current node marks the end of a complete word.
+     * Useful for determining when a match is found.
+     */
+    isEndOfWord?: boolean;
+
+    /**
+     * Options associated with the rule at this node.
+     * Can modify behavior such as casing, clipping, and matching types.
+     */
+    options?: RuleOptions;
+
+    /**
+     * The target replacement string for the rule at this node.
+     * Defines what the matched word should be replaced with.
+     */
+    target?: string;
+};
+
+/**
+ * Options for confirmation callbacks.
+ * Specifies conditions under which a rule should be confirmed.
+ */
+type ConfirmOptions = {
+    anyOf: string[];
 };

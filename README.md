@@ -1,17 +1,17 @@
 # Table of Contents
 
--   [Introduction](#introduction)
--   [Usage Guide](#trie-rules-usage-guide)
-    -   [Installation](#installation)
-    -   [API](#api)
-        -   [buildTrie](#buildtrie)
-        -   [searchAndReplace](#searchandreplace)
-        -   [containsTarget](#containstarget)
-        -   [containsSource](#containssource)
-        -   [confirmCallback](#confirmcallback)
--   [Performance](#performance)
-    -   [Background History](#background-history)
-    -   [Advantages of trie-based search over regex](#advantages-of-trie-based-search-over-regex)
+- [Introduction](#introduction)
+- [Usage Guide](#trie-rules-usage-guide)
+    - [Installation](#installation)
+    - [API](#api)
+        - [buildTrie](#buildtrie)
+        - [searchAndReplace](#searchandreplace)
+        - [containsTarget](#containstarget)
+        - [containsSource](#containssource)
+        - [confirmCallback](#confirmcallback)
+- [Performance](#performance)
+    - [Background History](#background-history)
+    - [Advantages of trie-based search over regex](#advantages-of-trie-based-search-over-regex)
 
 # Introduction
 
@@ -48,26 +48,28 @@ pnpm i trie-rules
 bun add trie-rules
 ```
 
-## `buildTrie(rules: Rule[]): TrieNode`
+## `buildTrie(rules: Rule[], options?: BuildTrieOptions): TrieNode`
 
 The `buildTrie` function constructs a trie data structure from an array of `rules`. This trie is used to efficiently search through text and replace specified source words with their corresponding to words.
 
 ### Parameters:
 
--   `rules` (Array of `Rule` objects): Each `Rule` object should have the following properties:
-    -   `from` (Array of strings): The words to search for in the text.
-    -   `to` (string): The word to replace the from with in the text.
-    -   `options` (optional `RuleOption` object): Additional options for matching rules which may include: - `match` (optional `MatchType`): Determines how the match should be treated. - `MatchType.Whole`: The match should be on an entire word, not surrounded by other alphabet characters or special characters with diacritics. Punctuation or symbols around it are allowed. - `MatchType.Alone`: The match should only be considered when the text is surrounded by spaces. - `MatchType.Any` (default): The match can occur in any context without specific boundaries. - `prefix` (optional `string`): A prefix that, if not present in the text, should be added to the target replacement.
-        -   casing (optional CaseSensitivity): Determines how casing should be handled during replacement.
-            • CaseSensitivity.Insensitive: The replacement ignores original casing.
-            • CaseSensitivity.Sensitive: The replacement preserves the original casing.
-        -   clipStartPattern (optional `RegExp` | `TriePattern`): A pattern to determine characters to clip at the start of a match.
-        -   clipEndPattern (optional `RegExp` | `TriePattern`): A pattern to determine characters to clip at the end of a match.
-        -   confirm (optional `ConfirmOptions`): Conditions that must be met for the rule to be applied.
+- `rules` (Array of `Rule` objects): Each `Rule` object should have the following properties:
+    - `from` (Array of strings): The words to search for in the text.
+    - `to` (string): The word to replace the from with in the text.
+    - `options` (optional `RuleOption` object): Additional options for matching rules which may include: - `match` (optional `MatchType`): Determines how the match should be treated. - `MatchType.Whole`: The match should be on an entire word, not surrounded by other alphabet characters or special characters with diacritics. Punctuation or symbols around it are allowed. - `MatchType.Alone`: The match should only be considered when the text is surrounded by spaces. - `MatchType.Any` (default): The match can occur in any context without specific boundaries. - `prefix` (optional `string`): A prefix that, if not present in the text, should be added to the target replacement.
+        - casing (optional CaseSensitivity): Determines how casing should be handled during replacement.
+          • CaseSensitivity.Insensitive: The replacement ignores original casing.
+          • CaseSensitivity.Sensitive: The replacement preserves the original casing.
+        - clipStartPattern (optional `RegExp` | `TriePattern`): A pattern to determine characters to clip at the start of a match.
+        - clipEndPattern (optional `RegExp` | `TriePattern`): A pattern to determine characters to clip at the end of a match.
+        - confirm (optional `ConfirmOptions`): Conditions that must be met for the rule to be applied.
+- `options` (optional `BuildTrieOptions`): Global options for the trie:
+    - `normalizeApostrophes` (optional `boolean`): When true, treats all apostrophe-like characters as equivalent during matching. This allows a rule with "don't" to match variants like "don't", "don`t", etc. Normalization is applied to rule sources during build time and to input text during search time. Defaults to false.
 
 ### Returns:
 
--   `TrieNode`: The root node of the trie data structure that represents the rules for search and replacement.
+- `TrieNode`: The root node of the trie data structure that represents the rules for search and replacement.
 
 ### Usage:
 
@@ -100,19 +102,28 @@ const rules = [
         options: {
             casing: CaseSensitivity.Insensitive,
             clipStartPattern: TriePattern.Apostrophes,
-            clipEndPattern: /[`'ʾʿ‘’]+$/,
+            clipEndPattern: /[`'ʾʿ'']+$/,
             confirm: { anyOf: ['condition1', 'condition2'] },
+        },
+    },
+    {
+        from: ["al-Qur'an"],
+        to: 'al-Qurʾān',
+        options: {
+            match: MatchType.Whole,
         },
     },
 ];
 
-const trie = buildTrie(rules);
+// Build trie with apostrophe normalization enabled
+const trie = buildTrie(rules, { normalizeApostrophes: true });
 
 // The trie can now be used with the searchAndReplace function to process text.
+// With normalizeApostrophes enabled, "al-Qur'an" will match "al-Qur'an", "al-Qur`an", etc.
 ```
 
 Note:
-The function assumes case-sensitive matching. The trie constructed is optimized for the `searchAndReplace` function provided in the same library, and it may not be compatible with other search functions or trie implementations.
+The function assumes case-sensitive matching by default. The trie constructed is optimized for the `searchAndReplace` function provided in the same library, and it may not be compatible with other search functions or trie implementations.
 
 ## `searchAndReplace(trie: TrieNode, text: string, options?: SearchAndReplaceOptions): string`
 
@@ -120,16 +131,15 @@ The `searchAndReplace` function takes a trie data structure and a text string as
 
 ### Parameters:
 
--   `trie` (`TrieNode`): The trie data structure that should be used for the search-and-replace operation. This trie should be constructed using the `buildTrie` function.
--   `text` (string): The text in which to search for and replace words.
--   `options` (`SearchAndReplaceOptions`, optional): Additional options to customize the search and replace behavior.
-    • confirmCallback (ConfirmCallback): A callback function to determine whether a replacement should proceed based on confirmation options.
-    • log (function): A logging function that receives information about the current node being processed. Useful for debugging or tracking the replacement process.
-    • preformatters (TriePattern[]): An array of predefined patterns to preformat the input text before performing replacements. Useful for handling specific character patterns like apostrophes.
+- `trie` (`TrieNode`): The trie data structure that should be used for the search-and-replace operation. This trie should be constructed using the `buildTrie` function.
+- `text` (string): The text in which to search for and replace words.
+- `options` (`SearchAndReplaceOptions`, optional): Additional options to customize the search and replace behavior.
+  • confirmCallback (ConfirmCallback): A callback function to determine whether a replacement should proceed based on confirmation options.
+  • log (function): A logging function that receives information about the current node being processed. Useful for debugging or tracking the replacement process.
 
 ### Returns:
 
--   `string`: A new string with all occurrences of the source words replaced by their corresponding to words as defined by the rules in the trie.
+- `string`: A new string with all occurrences of the source words replaced by their corresponding to words as defined by the rules in the trie.
 
 ### Usage:
 
@@ -138,20 +148,26 @@ import { buildTrie, searchAndReplace } from './trie';
 
 // Define your rules
 const rules = [
-    // ... (rules as defined in the buildTrie documentation) ...
+    {
+        from: ["Ka'bah"],
+        to: 'Kaʿbah',
+    },
+    // ... (other rules as defined in the buildTrie documentation) ...
 ];
 
-// Build the trie from the rules
-const trie = buildTrie(rules);
+// Build the trie from the rules with apostrophe normalization
+const trie = buildTrie(rules, { normalizeApostrophes: true });
 
 // The text you want to process
-const text = 'This is an example text with specificword and anotherword in it.';
+const text = 'We visited the Ka`bah yesterday.'; // Note the backtick apostrophe
 
 // Perform the search and replace operation
 const replacedText = searchAndReplace(trie, text);
 
-console.log(replacedText); // Outputs the text with 'example' and 'specificword' replaced by 'demo' and 'replacement', respectively.
+console.log(replacedText); // Outputs: 'We visited the Kaʿbah yesterday.'
 ```
+
+Note: If the trie was built with `normalizeApostrophes: true`, the search operation will automatically treat all apostrophe-like characters (', ', `, ʾ, ʿ) as equivalent to the standard apostrophe (') for matching purposes.
 
 ## `containsTarget(trie: TrieNode, to: string): boolean`
 
@@ -159,12 +175,12 @@ The `containsTarget` function checks whether a given to string is present as a r
 
 ### Parameters:
 
--   `trie` (`TrieNode`): The trie data structure to search within. This trie should be constructed using the `buildTrie` function.
--   `to` (string): The to replacement string to search for in the trie.
+- `trie` (`TrieNode`): The trie data structure to search within. This trie should be constructed using the `buildTrie` function.
+- `to` (string): The to replacement string to search for in the trie.
 
 ### Returns:
 
--   `boolean`: Returns `true` if the to is present in the trie as a replacement, `false` otherwise.
+- `boolean`: Returns `true` if the to is present in the trie as a replacement, `false` otherwise.
 
 ### Usage:
 
@@ -180,12 +196,12 @@ The `containsSource` function determines if a given source string is represented
 
 ### Parameters:
 
--   `trie` (`TrieNode`): The trie data structure previously built using the `buildTrie` function.
--   `source` (string): The source string for which to check presence in the trie.
+- `trie` (`TrieNode`): The trie data structure previously built using the `buildTrie` function.
+- `source` (string): The source string for which to check presence in the trie.
 
 ### Returns:
 
--   `boolean`: True if the source string is present in the trie, false otherwise.
+- `boolean`: True if the source string is present in the trie, false otherwise.
 
 ### Usage Example:
 
@@ -229,6 +245,44 @@ const confirmCallback = (options) => options.anyOf.some((word) => text.includes(
 
 const replacedText = searchAndReplace(trie, text, { confirmCallback });
 console.log(replacedText); // Outputs: 'Mālik went home.'
+```
+
+## Apostrophe Normalization
+
+The `normalizeApostrophes` feature allows for flexible matching of words containing apostrophe-like characters. When enabled, the following characters are treated as equivalent:
+
+- Standard apostrophe: `'`
+- Curly apostrophe: `'`
+- Backtick: `` ` ``
+- Arabic hamza above: `ʾ`
+- Arabic ain: `ʿ`
+
+### Example Usage:
+
+```js
+const rules = [
+    {
+        from: ["al-Qur'an"],
+        to: 'al-Qurʾān',
+        options: { match: MatchType.Whole },
+    },
+    {
+        from: ["Ka'bah"],
+        to: 'Kaʿbah',
+    },
+];
+
+const trie = buildTrie(rules, { normalizeApostrophes: true });
+
+// All of these will match and be replaced:
+console.log(searchAndReplace(trie, "The recitation of al-Qur'an is important"));
+// Output: "The recitation of al-Qurʾān is important"
+
+console.log(searchAndReplace(trie, 'We went by the Ka`bah yesterday.'));
+// Output: "We went by the Kaʿbah yesterday."
+
+console.log(searchAndReplace(trie, 'The holy al-Qurʾan and sacred Kaʿbah'));
+// Output: "The holy al-Qurʾān and sacred Kaʿbah"
 ```
 
 # Performance
@@ -342,6 +396,8 @@ The trie-based `searchAndReplace` algorithm has several advantages over a regula
 
 7. **Complex Replacements**: Your trie-based approach allows for complex replacements based on custom logic, like adding prefixes where they are missing. This kind of logic goes beyond simple pattern matching and substitution and would require additional processing outside of the regex replace function.
 
+8. **Apostrophe Normalization**: The trie-based approach allows for sophisticated character normalization, such as treating different apostrophe-like characters as equivalent, which would be complex and inefficient to implement with regex patterns.
+
 In summary, while a regex can be a powerful tool for pattern matching, a trie-based approach can offer better performance, especially with a large and complex set of patterns, and provides more flexibility for custom matching and replacement logic.
 
 ### Runtime Complexity
@@ -352,9 +408,9 @@ Let's analyze the runtime complexity of both functions separately:
 
 The `buildTrie` function takes an array of rule objects, each with a `from` array and a `to` string. For each source word in each rule, it inserts the word into the trie.
 
--   Let \( n \) be the number of rules.
--   Let \( m \) be the average number of source words per rule.
--   Let \( k \) be the average length of the source words.
+- Let \( n \) be the number of rules.
+- Let \( m \) be the average number of source words per rule.
+- Let \( k \) be the average length of the source words.
 
 The function iterates over each rule and each source word within that rule. For each character in a source word, it performs a constant time check and possibly inserts a new node into the trie.
 
@@ -364,8 +420,8 @@ The complexity is then \( O(n \cdot m \cdot k) \). Since \( n \), \( m \), and \
 
 The `searchAndReplace` function iterates over the characters in the input text and attempts to match substrings to words in the trie.
 
--   Let \( l \) be the length of the text to search through.
--   Let \( k \) be the average length of the source words (as defined above).
+- Let \( l \) be the length of the text to search through.
+- Let \( k \) be the average length of the source words (as defined above).
 
 For each character in the text, in the worst case, the function might have to check \( k \) characters deep into the trie (if there's a potential match). However, note that due to the nature of a trie, the function does not always perform a linear scan of \( k \) characters for every character in \( l \); it can skip ahead whenever a complete word is matched and replaced. Therefore, the worst-case scenario would be if the text consisted of repeating patterns that are all present in the trie.
 
