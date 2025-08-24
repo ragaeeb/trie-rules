@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, jest } from 'bun:test';
 
 import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
 import { CaseSensitivity, MatchType, Rule, TrieNode, TriePattern } from './types';
@@ -831,36 +831,58 @@ describe('trie', () => {
                 expect(searchAndReplace(trie, `Studying al-Quran's verses`)).toEqual(`Studying al-Qurʾān's verses`);
             });
 
+            describe('normalizeApostrophes', () => {
+                it('should handle words with apostrophe variations', () => {
+                    rules = [
+                        {
+                            from: ["al-Qur'an"],
+                            options: { match: MatchType.Whole },
+                            to: 'al-Qurʾān',
+                        },
+                        {
+                            from: ["Ka'bah"],
+                            to: 'Kaʿbah',
+                        },
+                    ];
+
+                    trie = buildTrie(rules, { normalizeApostrophes: true });
+
+                    expect(searchAndReplace(trie, `The recitation of al-Qur‘an is important`)).toEqual(
+                        `The recitation of al-Qurʾān is important`,
+                    );
+
+                    expect(searchAndReplace(trie, `We went by the Ka’bah yesterday.`)).toEqual(
+                        `We went by the Kaʿbah yesterday.`,
+                    );
+                });
+
+                it('should handle modifier letter apostrophe (U+02BC)', () => {
+                    const trie = buildTrie([{ from: ["Ka'bah"], to: 'Kaʿbah' }], { normalizeApostrophes: true });
+                    expect(searchAndReplace(trie, 'We visited the Kaʼbah yesterday.')).toEqual(
+                        'We visited the Kaʿbah yesterday.',
+                    );
+                });
+            });
+
             it('should handle words starting with an apostrophe', () => {
                 rules = [
                     {
-                        from: ["'Umar", 'Umar'],
+                        from: ['Umar'],
                         options: { clipStartPattern: TriePattern.Apostrophes, match: MatchType.Whole },
                         to: 'ʿUmar',
+                    },
+                    {
+                        from: ['Ubayd'],
+                        options: { clipStartPattern: TriePattern.Apostrophes, match: MatchType.Whole },
+                        to: 'ʿUbayd',
                     },
                 ];
 
                 trie = buildTrie(rules);
 
                 expect(searchAndReplace(trie, `'Umar's wisdom`)).toEqual(`ʿUmar's wisdom`);
-                expect(searchAndReplace(trie, `I spoke to Umar`)).toEqual(`I spoke to ʿUmar`);
-            });
-
-            it('should flatten apostrophes with the preformatter', () => {
-                rules = [
-                    {
-                        from: ["Ka'bah"],
-                        to: 'Kaʿbah',
-                    },
-                ];
-
-                trie = buildTrie(rules);
-
-                expect(
-                    searchAndReplace(trie, `We went by the Ka’bah yesterday.`, {
-                        preformatters: [TriePattern.Apostrophes],
-                    }),
-                ).toEqual(`We went by the Kaʿbah yesterday.`);
+                expect(searchAndReplace(trie, `I spoke to 'Umar`)).toEqual(`I spoke to ʿUmar`);
+                expect(searchAndReplace(trie, `I spoke to ʻʿUbayd`)).toEqual(`I spoke to ʿUbayd`);
             });
 
             it('should handle both rules with and without normalizeApostrophes', () => {
@@ -970,7 +992,7 @@ describe('trie', () => {
             });
 
             it('should trigger a confirmation', () => {
-                const confirmCallback = vi.fn(() => true);
+                const confirmCallback = jest.fn(() => true);
                 trie = buildTrie(rules);
 
                 searchAndReplace(trie, 'Maalik went home.', { confirmCallback });
@@ -979,7 +1001,7 @@ describe('trie', () => {
             });
 
             it('should not trigger a confirmation if the rule does not include it', () => {
-                const confirmCallback = vi.fn(() => true);
+                const confirmCallback = jest.fn(() => true);
 
                 rules[0].options = { match: MatchType.Whole };
                 trie = buildTrie(rules);
@@ -989,7 +1011,7 @@ describe('trie', () => {
             });
 
             it('should still make the replacement if the callback is not passed in', () => {
-                const confirmCallback = vi.fn(() => true);
+                const confirmCallback = jest.fn(() => true);
                 trie = buildTrie(rules);
 
                 const actual = searchAndReplace(trie, 'Maalik went home.');

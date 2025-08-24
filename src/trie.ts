@@ -1,5 +1,11 @@
 import { APOSTROPHE_LIKE_REGEX } from './constants.js';
-import { CaseSensitivity, Rule, SearchAndReplaceOptions, TrieNode, TriePattern } from './types.js';
+import {
+    type BuildTrieOptions,
+    CaseSensitivity,
+    type Rule,
+    type SearchAndReplaceOptions,
+    type TrieNode,
+} from './types.js';
 import {
     adjustClipping,
     generateCaseVariants,
@@ -11,14 +17,24 @@ import {
 
 /**
  * Builds a trie based on the provided rules.
+ * @param {Rule[]} rules - Array of search and replace rules to build the trie from.
+ * @param {BuildTrieOptions} [options] - Optional build configuration.
+ * @param {boolean} [options.normalizeApostrophes=false] - When true, treats all apostrophe-like
+ *   characters as equivalent during matching. This allows a rule with "don't" to match variants
+ *   like "don't", "don`t", etc. Normalization is applied to rule sources during build time and
+ *   to input text during search time.
+ * @returns {TrieNode} The constructed trie with build options stored for use during search operations.
  */
-export const buildTrie = (rules: Rule[]): TrieNode => {
-    const trie: TrieNode = {};
+export const buildTrie = (rules: Rule[], buildOptions?: BuildTrieOptions): TrieNode => {
+    const trie: TrieNode = { ...(buildOptions && { buildOptions }) };
+    const normalizeApostrophes = Boolean(buildOptions?.normalizeApostrophes);
 
     for (const rule of rules) {
         const { from: sources, options, to: target } = rule;
 
-        for (const source of sources) {
+        for (let source of sources) {
+            source = normalizeApostrophes ? source.replace(APOSTROPHE_LIKE_REGEX, "'") : source;
+
             if (options?.casing === CaseSensitivity.Insensitive) {
                 const variants = generateCaseVariants(source);
                 for (const variant of variants) {
@@ -90,32 +106,37 @@ export const containsTarget = (trie: TrieNode, text: string, options: { caseInse
  * @param {SearchAndReplaceOptions} options - Optional configurations for search and replace.
  * @returns {string} The modified text after replacements.
  */
-export const searchAndReplace = (
-    trie: TrieNode,
-    textToFormat: string,
-    options: SearchAndReplaceOptions = {},
-): string => {
+export const searchAndReplace = (trie: TrieNode, text: string, searchOptions: SearchAndReplaceOptions = {}): string => {
     let resultString = '';
     let i = 0;
-    let text = textToFormat;
-
-    if (options.preformatters) {
-        if (options.preformatters.includes(TriePattern.Apostrophes)) {
-            text = text.replace(new RegExp(APOSTROPHE_LIKE_REGEX, 'g'), "'");
-        }
-    }
+    const normalizeApostrophes = Boolean(trie.buildOptions?.normalizeApostrophes);
 
     while (i < text.length) {
         let node: TrieNode = trie;
         let j = i;
-        let lastValidMatch: { endIndex: number; node: TrieNode; startIndex: number } | null = null;
+        let lastValidMatch: null | { endIndex: number; node: TrieNode; startIndex: number } = null;
 
-        while (j < text.length && node[text[j]]) {
-            node = node[text[j]] as TrieNode;
+        while (j < text.length) {
+            const currentChar = text[j];
+            let lookupChar = currentChar;
+
+            // If apostrophe normalization is enabled, normalize apostrophe-like chars to standard apostrophe
+            if (normalizeApostrophes && APOSTROPHE_LIKE_REGEX.test(currentChar)) {
+                lookupChar = "'";
+            }
+
+            if (!node[lookupChar]) {
+                break;
+            }
+
+            node = node[lookupChar] as TrieNode;
             j++;
 
             if (node.isEndOfWord) {
-                if (isValidMatch(text, i, j, node.options) && isConsidered(node.options, options.confirmCallback)) {
+                if (
+                    isValidMatch(text, i, j, node.options) &&
+                    isConsidered(node.options, searchOptions.confirmCallback)
+                ) {
                     lastValidMatch = { endIndex: j, node, startIndex: i };
                 }
             }
@@ -124,14 +145,14 @@ export const searchAndReplace = (
         if (lastValidMatch) {
             const { endIndex, node: matchedNode, startIndex } = lastValidMatch;
 
-            if (options.log) {
-                options.log(lastValidMatch);
+            if (searchOptions.log) {
+                searchOptions.log({ node: matchedNode });
             }
 
             const replacement = getReplacement({
                 endIndex,
                 matchedNode,
-                options,
+                options: searchOptions,
                 startIndex,
                 text,
             });

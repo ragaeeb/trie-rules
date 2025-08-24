@@ -1,11 +1,11 @@
 import { APOSTROPHE_LIKE_REGEX, LETTER_REGEX } from './constants.js';
 import {
     CaseSensitivity,
-    ConfirmCallback,
+    type ConfirmCallback,
     MatchType,
-    RuleOptions,
-    SearchAndReplaceOptions,
-    TrieNode,
+    type RuleOptions,
+    type SearchAndReplaceOptions,
+    type TrieNode,
     TriePattern,
 } from './types.js';
 
@@ -99,27 +99,25 @@ export const isWordCharacterAt = (text: string, index: number): boolean => {
         return false;
     }
 
-    if (isLetter(char)) {
-        return true;
-    }
-
+    // 1) Apostrophe-like chars get special handling
     if (APOSTROPHE_LIKE_REGEX.test(char)) {
         const prevChar = text.charAt(index - 1);
         const nextChar = text.charAt(index + 1);
 
-        if (isLetter(prevChar) && isLetter(nextChar)) {
-            const nextNextChar = text.charAt(index + 2);
-
-            // Apostrophe between letters, could be part of the word
-            // Check if it's a possessive 's'
-            if (nextChar.toLowerCase() === 's' && !isLetter(nextNextChar)) {
-                // Apostrophe 's' is possessive, not part of the word
+        // Only consider it part of a word if it's BETWEEN true letters
+        if (isAlphabeticLetter(prevChar) && isAlphabeticLetter(nextChar)) {
+            if (char === "'" && nextChar.toLowerCase() === 's' && !isAlphabeticLetter(text.charAt(index + 2))) {
                 return false;
             }
+
             return true;
         }
+        // Otherwise it's a boundary, not a word char
+        return false;
     }
-    return false;
+
+    // 2) All other letters are word characters
+    return isLetter(char);
 };
 
 /**
@@ -282,15 +280,35 @@ export const adjustClipping = (
     if (options.clipStartPattern) {
         const regex = mapTriePatternToRegex(options.clipStartPattern);
 
-        if (regex.test(resultString.at(-1) as string)) {
+        while (clippingIndex > 0) {
+            const ch = resultString.charAt(clippingIndex - 1);
+
+            // be safe with potentially-global regexes
+            if (regex instanceof RegExp) {
+                (regex as RegExp).lastIndex = 0;
+            }
+
+            if (!regex.test(ch)) {
+                break;
+            }
+
             clippingIndex--;
         }
     }
 
-    if (options?.clipEndPattern) {
+    if (options.clipEndPattern) {
         const regex = mapTriePatternToRegex(options.clipEndPattern);
+        while (adjustedIndex < text.length) {
+            const ch = text.charAt(adjustedIndex);
 
-        if (regex.test(text.at(endIndex) as string)) {
+            if (regex instanceof RegExp) {
+                (regex as RegExp).lastIndex = 0;
+            }
+
+            if (!regex.test(ch)) {
+                break;
+            }
+
             adjustedIndex++;
         }
     }
@@ -307,6 +325,7 @@ export const adjustClipping = (
  */
 export const insertWordIntoTrie = (trie: TrieNode, word: string, target: string, options?: RuleOptions): void => {
     let node = trie;
+
     for (const char of word) {
         if (!node[char]) {
             node[char] = {};
