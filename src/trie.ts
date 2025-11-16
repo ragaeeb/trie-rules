@@ -50,8 +50,11 @@ export const buildTrie = (rules: Rule[], buildOptions?: BuildTrieOptions): TrieN
 };
 
 /**
- * Checks if a source exists in the trie.
- * @returns {boolean} - True if the source exists, false otherwise.
+ * Checks if an exact source string exists in the trie produced by {@link buildTrie}.
+ *
+ * @param {TrieNode} trie - The trie to search within.
+ * @param {string} text - The candidate source string to look up.
+ * @returns {boolean} True if the trie contains the source string, otherwise false.
  */
 export const containsSource = (trie: TrieNode, text: string): boolean => {
     let node: TrieNode = trie;
@@ -68,8 +71,13 @@ export const containsSource = (trie: TrieNode, text: string): boolean => {
 };
 
 /**
- * Checks if a target exists in the trie.
- * @returns {boolean} - True if the target exists, false otherwise.
+ * Checks whether any stored rule targets inside the trie match the provided text.
+ *
+ * @param {TrieNode} trie - The trie whose nodes will be inspected.
+ * @param {string} text - The target text to locate.
+ * @param {{ caseInsensitive?: boolean }} [options] - Optional matching controls.
+ * @param {boolean} [options.caseInsensitive=false] - When true, compares targets ignoring case.
+ * @returns {boolean} True if a matching target is found, otherwise false.
  */
 export const containsTarget = (trie: TrieNode, text: string, options: { caseInsensitive?: boolean } = {}): boolean => {
     const { caseInsensitive } = options;
