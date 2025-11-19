@@ -1,6 +1,7 @@
 # Table of Contents
 
 - [Introduction](#introduction)
+- [Features](#features)
 - [Usage Guide](#trie-rules-usage-guide)
     - [Installation](#installation)
     - [API](#api)
@@ -12,6 +13,7 @@
 - [Performance](#performance)
     - [Background History](#background-history)
     - [Advantages of trie-based search over regex](#advantages-of-trie-based-search-over-regex)
+- [Development](#development)
 
 # Introduction
 
@@ -32,6 +34,15 @@ This project was mainly created to replace transliterations of Arabic words in R
 
 However the rule set structure is flexible enough to apply to a wide range of applications.
 
+## Features
+
+- **High-performance trie builder** – Use `buildTrie` to normalise apostrophes and fan out case variants so that lookups remain fast even with thousands of rules.
+- **Deterministic matching utilities** – Check for rule coverage with `containsSource` and `containsTarget`, or run full replacements through `searchAndReplace` with opt-in confirmation callbacks.
+- **Comprehensive text helpers** – Re-use the exported helpers such as `isAlphabeticLetter`, `findFirstAlphaIndex`, `generateCaseVariants`, `adjustCasing`, `adjustClipping`, and `insertWordIntoTrie` to implement bespoke trie-aware transformations.
+- **Rule level ergonomics** – Fine tune matching with `CaseSensitivity`, `MatchType`, `TriePattern`, and contextual clipping support.
+- **Modern toolchain** – The project now builds with a lightweight `tsdown` pipeline (powered by Bun and TypeScript) and uses Biome for linting and formatting.
+
+## trie-rules Usage Guide
 # trie-rules Usage Guide
 
 This guide explains how to use the exported functions from `trie-rules`.
@@ -453,3 +464,16 @@ Suite: benchmark/trie-benchmark.ts
 | 3 | `searchAndReplace` | 71,031.31 ns | 95.09 ns |
 
 These benchmarks were performed on a `Apple M2 Pro` with `32GB RAM` specifications, using the `testing/rules.json` sample data.
+
+## Development
+
+The repository ships with Bun-based scripts to keep builds reproducible:
+
+| Command | Description |
+| --- | --- |
+| `bun run build` | Bundles the library through the local `tsdown` pipeline and emits type declarations with `tsc`. |
+| `bun test` | Executes the Vitest-powered unit test suite (via Bun's test runner). |
+| `bun run lint` | Runs Biome using the settings in `biome.json` for linting. |
+| `bun run format` | Formats source files with Biome's formatter. |
+
+When dependencies need updating, run `bun update --latest`. If your environment has restricted registry access, configure an appropriate mirror before running the command.

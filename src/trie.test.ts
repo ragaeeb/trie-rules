@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, jest } from 'bun:test';
 
 import { buildTrie, containsSource, containsTarget, searchAndReplace } from './trie';
-import { CaseSensitivity, MatchType, Rule, TrieNode, TriePattern } from './types';
+import { CaseSensitivity, MatchType, type Rule, type TrieNode, TriePattern } from './types';
 
 describe('trie', () => {
     let rules: Rule[] = [];

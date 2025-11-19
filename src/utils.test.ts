@@ -1,13 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 
 import { APOSTROPHE_LIKE_REGEX } from './constants';
-import { CaseSensitivity, MatchType, RuleOptions, TrieNode, TriePattern } from './types';
+import { CaseSensitivity, MatchType, type RuleOptions, type TrieNode, TriePattern } from './types';
 import {
     adjustCasing,
     adjustClipping,
+    findFirstAlphaIndex,
     generateCaseVariants,
     getReplacement,
     insertWordIntoTrie,
+    isAlphabeticLetter,
     isConsidered,
     isLetter,
     isLowerCase,
@@ -63,6 +65,34 @@ describe('utils', () => {
             expect(isLowerCase('Ñ')).toBe(false);
             expect(isLowerCase('1')).toBe(false);
             expect(isLowerCase('@')).toBe(false);
+        });
+    });
+
+    describe('isAlphabeticLetter', () => {
+        it('should return true for standard alphabetic characters', () => {
+            expect(isAlphabeticLetter('a')).toBe(true);
+            expect(isAlphabeticLetter('Z')).toBe(true);
+            expect(isAlphabeticLetter('ñ')).toBe(true);
+        });
+
+        it('should return false for apostrophe-like and non-letter characters', () => {
+            expect(isAlphabeticLetter("'")).toBe(false);
+            expect(isAlphabeticLetter('’')).toBe(false);
+            expect(isAlphabeticLetter('1')).toBe(false);
+            expect(isAlphabeticLetter(' ')).toBe(false);
+        });
+    });
+
+    describe('findFirstAlphaIndex', () => {
+        it('should return the index of the first alphabetic character', () => {
+            expect(findFirstAlphaIndex('123abc')).toBe(3);
+            expect(findFirstAlphaIndex("!!'Zed")).toBe(3);
+        });
+
+        it('should return -1 when no alphabetic character exists', () => {
+            expect(findFirstAlphaIndex('12345')).toBe(-1);
+            expect(findFirstAlphaIndex('!!!')).toBe(-1);
+            expect(findFirstAlphaIndex('')).toBe(-1);
         });
     });
 
