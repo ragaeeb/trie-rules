@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 
 import { APOSTROPHE_LIKE_REGEX } from './constants';
-import { CaseSensitivity, MatchType, RuleOptions, TrieNode, TriePattern } from './types';
+import { CaseSensitivity, MatchType, type RuleOptions, type TrieNode, TriePattern } from './types';
 import {
     adjustCasing,
     adjustClipping,
