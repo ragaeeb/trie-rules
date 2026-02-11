@@ -89,6 +89,17 @@ describe('optimizeRules', () => {
             ]);
             expect(result.savings.sourcesRemoved).toBe(2);
         });
+
+        it('should not consolidate when sources normalize to identical values after apostrophe normalization', () => {
+            // Both sources normalize to "Qur'an" (same case), so no case variant exists
+            const rules: Rule[] = [{ from: ["Qur'an", 'Qur\u2019an'], to: 'Qurʾān' }];
+
+            const result = optimizeRules(rules, { normalizeApostrophes: true });
+
+            // Should consolidate via apostrophe normalization, NOT case sensitivity
+            expect(result.optimizedRules[0].options?.casing).toBeUndefined();
+            expect(result.savings.sourcesRemoved).toBe(1);
+        });
     });
 
     describe('apostrophe normalization', () => {
@@ -106,9 +117,7 @@ describe('optimizeRules', () => {
 
             const result = optimizeRules(rules, { normalizeApostrophes: false });
 
-            expect(result.optimizedRules).toEqual([
-                { from: ["Qur'an", 'Qur’an'], options: undefined, to: 'Qurʾān' },
-            ]);
+            expect(result.optimizedRules).toEqual([{ from: ["Qur'an", 'Qur’an'], options: undefined, to: 'Qurʾān' }]);
             expect(result.savings.sourcesRemoved).toBe(0);
         });
 
@@ -153,6 +162,29 @@ describe('optimizeRules', () => {
                 },
             ]);
             expect(result.savings.sourcesRemoved).toBe(1);
+        });
+
+        it('should not optimize when sources have mixed different prefix types', () => {
+            // al- and ar- are two different prefixes, detectPrefix should return null
+            const rules: Rule[] = [{ from: ['Bukhari', 'al-Bukhari', 'ar-Bukhari'], to: 'al-Bukhari' }];
+
+            const result = optimizeRules(rules);
+
+            // Prefix optimization should still work for al- since al- matches target
+            // but the ar- variant stays because it has a different prefix
+            expect(result.optimizedRules[0].from).toContain('ar-Bukhari');
+        });
+
+        it('should prefer the non-prefixed version when it appears after the prefixed version', () => {
+            // Order matters: prefixed version listed first, non-prefixed second
+            // Include an extra prefixed variant so sourcesRemoved is correctly tracked
+            const rules: Rule[] = [{ from: ['al-Nawawi', 'An-Nawawi', 'Nawawi'], to: 'al-Nawawi' }];
+
+            const result = optimizeRules(rules);
+
+            // Non-prefixed 'Nawawi' should be kept; both al- prefixed variants removed
+            expect(result.optimizedRules[0].from).toContain('Nawawi');
+            expect(result.optimizedRules[0].options?.prefix).toBe('al-');
         });
 
         it('should not optimize when targets have different bases from sources', () => {
@@ -220,6 +252,30 @@ describe('optimizeRules', () => {
                 },
             ]);
             expect(result.savings.sourcesRemoved).toBe(2);
+        });
+
+        it('should prefer version without clip-start chars when it appears after clipped version', () => {
+            // Clipped variants listed first, non-clipped last. The first clipped entry claims
+            // the map slot, the second clipped entry increments sourcesRemoved (same key as first),
+            // then the non-clipped entry replaces the first via the else-branch preference.
+            const rules: Rule[] = [{ from: ['\u2018Uthman', '\u02BBUthman', 'Uthman'], to: '\u02BFUthm\u0101n' }];
+
+            const result = optimizeRules(rules);
+
+            // The non-clipped 'Uthman' should be preferred
+            expect(result.optimizedRules[0].from).toEqual(['Uthman']);
+            expect(result.optimizedRules[0].options?.clipStartPattern).toBe(TriePattern.Apostrophes);
+        });
+
+        it('should prefer version without clip-end chars when it appears after clipped version', () => {
+            // Clipped variants listed first, non-clipped last.
+            const rules: Rule[] = [{ from: ["du'a\u2019", "du'a\u02BE", "du'a"], to: 'du\u02BF\u0101\u02BE' }];
+
+            const result = optimizeRules(rules);
+
+            // The non-clipped "du'a" should be preferred
+            expect(result.optimizedRules[0].from).toEqual(["du'a"]);
+            expect(result.optimizedRules[0].options?.clipEndPattern).toBe(TriePattern.Apostrophes);
         });
 
         it('should preserve existing clip patterns', () => {
@@ -310,6 +366,85 @@ describe('optimizeRules', () => {
 
             expect(result.optimizedRules).toHaveLength(2);
             expect(result.savings.rulesRemoved).toBe(0);
+        });
+
+        it('should not remove rules with same target and options but overlapping non-subset sources', () => {
+            // Use different targets so groupRulesByTarget won't merge them into one group
+            const rules: Rule[] = [
+                { from: ['Alpha', 'Gamma'], to: 'Target1' },
+                { from: ['Beta', 'Delta'], to: 'Target2' },
+            ];
+
+            const result = optimizeRules(rules);
+
+            // Different targets means removeSubsets skips them
+            expect(result.optimizedRules).toHaveLength(2);
+            expect(result.savings.rulesRemoved).toBe(0);
+        });
+
+        it('should not remove rules with same target but different options', () => {
+            // Same target but different options → different groupRulesByTarget keys → separate optimized rules
+            // removeSubsets will compare them but optKey won't match (line 689)
+            const rules: Rule[] = [
+                { from: ['Alpha', 'Beta', 'Gamma'], options: { match: MatchType.Whole }, to: 'Target' },
+                { from: ['Delta', 'Epsilon'], options: { match: MatchType.Alone }, to: 'Target' },
+            ];
+
+            const result = optimizeRules(rules);
+
+            expect(result.optimizedRules).toHaveLength(2);
+        });
+
+        it('should keep both rules when optimized rules have same target and options but non-subset from arrays', () => {
+            // Rule A: already has casing option, group key includes it
+            // Rule B: no casing option initially, but optimizeGroup detects case variants and adds it
+            // After optimization, both end up with same target + same options ({casing: 'i'})
+            // but different from arrays, so neither is a strict subset of the other.
+            const rules: Rule[] = [
+                {
+                    from: ['Alpha'],
+                    options: { casing: CaseSensitivity.Insensitive },
+                    to: 'Target',
+                },
+                {
+                    from: ['Beta', 'beta'],
+                    to: 'Target',
+                },
+            ];
+
+            const result = optimizeRules(rules);
+
+            // Both rules should survive:
+            // Rule A → { from: ['Alpha'], options: { casing: 'i' }, to: 'Target' }
+            // Rule B → { from: ['Beta'], options: { casing: 'i' }, to: 'Target' } (after case dedup)
+            // In removeSubsets: same target, same optKey, but from ['Alpha'] is NOT a subset of ['Beta']
+            expect(result.optimizedRules).toHaveLength(2);
+            expect(result.savings.rulesRemoved).toBe(0);
+        });
+
+        it('should remove a rule via removeSubsets when it is a proper subset of another after optimization', () => {
+            // Rule A: has casing already set, from: ['Alpha', 'Beta']
+            // Rule B: no casing initially, but gains it via case variant detection, from: ['Alpha', 'alpha']
+            // After optimizeGroup:
+            //   A → { from: ['Alpha', 'Beta'], options: { casing: 'i' }, to: 'Target' }
+            //   B → { from: ['Alpha'], options: { casing: 'i' }, to: 'Target' } (alpha deduped)
+            // In removeSubsets: same target, same optKey, B.fromSet {Alpha} ⊂ A.fromSet {Alpha, Beta} → removed
+            const rules: Rule[] = [
+                {
+                    from: ['Alpha', 'Beta'],
+                    options: { casing: CaseSensitivity.Insensitive },
+                    to: 'Target',
+                },
+                {
+                    from: ['Alpha', 'alpha'],
+                    to: 'Target',
+                },
+            ];
+
+            const result = optimizeRules(rules);
+
+            expect(result.optimizedRules).toHaveLength(1);
+            expect(result.optimizedRules[0].from).toEqual(['Alpha', 'Beta']);
         });
     });
 
@@ -439,6 +574,31 @@ describe('optimizeRules', () => {
                 },
             ]);
             expect(result.savings.rulesRemoved).toBe(2);
+        });
+
+        it('should not discard other sources when consolidating a shared source across rules', () => {
+            const rules: Rule[] = [
+                {
+                    from: ['x', 'y'],
+                    options: { match: MatchType.Alone },
+                    to: 'Target',
+                },
+                {
+                    from: ['x'],
+                    to: 'Target',
+                },
+            ];
+
+            const result = optimizeRules(rules);
+
+            // "x" should be consolidated to the most permissive (Any from Rule B)
+            // "y" from Rule A should NOT be silently lost
+            expect(result.optimizedRules).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ from: ['y'], to: 'Target' }),
+                    expect.objectContaining({ from: ['x'], to: 'Target' }),
+                ]),
+            );
         });
     });
 

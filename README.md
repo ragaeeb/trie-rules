@@ -47,7 +47,7 @@ However the rule set structure is flexible enough to apply to a wide range of ap
 - **Deterministic matching utilities** – Check for rule coverage with `containsSource` and `containsTarget`, or run full replacements through `searchAndReplace` with opt-in confirmation callbacks.
 - **Rule optimization** – Use `optimizeRules` to automatically detect and consolidate redundant patterns: case-insensitive variants, apostrophe normalization, prefix deduplication, subset elimination, and conflict detection.
 - **Comprehensive text helpers** – Re-use the exported helpers such as `isAlphabeticLetter`, `findFirstAlphaIndex`, `generateCaseVariants`, `adjustCasing`, `adjustClipping`, and `insertWordIntoTrie` to implement bespoke trie-aware transformations.
-- **Rule level ergonomics** – Fine tune matching with `CaseSensitivity`, `MatchType`, `TriePattern`, and contextual clipping support.
+- **Rule-level ergonomics** – Fine-tune matching with `CaseSensitivity`, `MatchType`, `TriePattern`, and contextual clipping support.
 - **Modern toolchain** – The project now builds with a lightweight `tsdown` pipeline (powered by Bun and TypeScript) and uses Biome for linting and formatting.
 - **Export regression tests** – A post-build validation step (`test:exports`) type-checks and runtime-tests the built bundle to ensure all public API members and types are correctly exported.
 
@@ -280,7 +280,9 @@ const replacedText = searchAndReplace(trie, text, { confirmCallback });
 console.log(replacedText); // Outputs: 'Mālik went home.'
 ```
 
-## `optimizeRules(rules: Rule[], options?: BuildTrieOptions): OptimizeResult`
+## optimizeRules
+
+`optimizeRules(rules: Rule[], options?: BuildTrieOptions): OptimizeResult`
 
 The `optimizeRules` function analyzes an array of rules and automatically consolidates redundant patterns, returning an optimized rule set along with statistics and warnings.
 
@@ -306,7 +308,7 @@ The `optimizeRules` function analyzes an array of rules and automatically consol
     - `savings.sourcesRemoved` (`number`): How many individual sources were eliminated.
     - `savings.rulesRemoved` (`number`): How many entire rules were eliminated.
     - `warnings.conflicts` (`array`): Sources that map to different targets.
-    - `warnings.overwritten` (`array`): Rules that would be overwritten in the trie.
+    - `warnings.overwrittenRules` (`array`): Rules that would be overwritten in the trie.
 
 ### Usage
 

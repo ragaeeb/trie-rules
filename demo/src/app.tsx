@@ -24,19 +24,26 @@ function pickRandomWords(rules: Rule[], count: number): string {
         }
     }
 
-    const picked: string[] = [];
-    const used = new Set<number>();
-    const limit = Math.min(count, allFroms.length);
-
-    while (picked.length < limit) {
-        const idx = Math.floor(Math.random() * allFroms.length);
-        if (!used.has(idx)) {
-            used.add(idx);
-            picked.push(allFroms[idx]);
-        }
+    // Fisher-Yates shuffle then take first `count` items
+    const shuffled = [...allFroms];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    return picked.join(' ');
+    return shuffled.slice(0, count).join(' ');
+}
+
+function countDiffs(original: string, result: string): number {
+    const origWords = original.split(/\s+/);
+    const resWords = result.split(/\s+/);
+    let diffs = 0;
+    for (let i = 0; i < Math.max(origWords.length, resWords.length); i++) {
+        if (origWords[i] !== resWords[i]) {
+            diffs++;
+        }
+    }
+    return diffs;
 }
 
 export function App() {
@@ -94,17 +101,7 @@ export function App() {
         }
         const result = searchAndReplace(trie, originalText);
         setDisplayText(result);
-
-        // Count replacements (simple diff by comparing words)
-        const origWords = originalText.split(/\s+/);
-        const resWords = result.split(/\s+/);
-        let diffs = 0;
-        for (let i = 0; i < Math.max(origWords.length, resWords.length); i++) {
-            if (origWords[i] !== resWords[i]) {
-                diffs++;
-            }
-        }
-        setReplacements(diffs);
+        setReplacements(countDiffs(originalText, result));
     }, [trie, originalText]);
 
     const handleFocus = useCallback(() => {
@@ -129,15 +126,7 @@ export function App() {
         if (isFocused && trie) {
             const result = searchAndReplace(trie, text);
             setDisplayText(result);
-            const origWords = text.split(/\s+/);
-            const resWords = result.split(/\s+/);
-            let diffs = 0;
-            for (let i = 0; i < Math.max(origWords.length, resWords.length); i++) {
-                if (origWords[i] !== resWords[i]) {
-                    diffs++;
-                }
-            }
-            setReplacements(diffs);
+            setReplacements(countDiffs(text, result));
         } else {
             setDisplayText(text);
             setReplacements(0);

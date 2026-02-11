@@ -90,8 +90,10 @@ type RuleGroup = {
  * @param {boolean} normalizeApostrophes - Whether to normalize apostrophe-like characters.
  * @returns {string} The normalized from string.
  */
+const APOSTROPHE_LIKE_REGEX_GLOBAL = new RegExp(APOSTROPHE_LIKE_REGEX.source, 'gu');
+
 const normalizeSource = (from: string, normalizeApostrophes: boolean): string => {
-    return normalizeApostrophes ? from.replace(APOSTROPHE_LIKE_REGEX, "'") : from;
+    return normalizeApostrophes ? from.replace(APOSTROPHE_LIKE_REGEX_GLOBAL, "'") : from;
 };
 
 /**
@@ -163,7 +165,8 @@ const groupRulesByTarget = (
     let rulesMerged = 0;
 
     for (const rule of rules) {
-        const key = `${rule.to}::${JSON.stringify(rule.options || {})}`;
+        const optObj = rule.options || {};
+        const key = `${rule.to}::${JSON.stringify(optObj, Object.keys(optObj).sort())}`;
 
         if (!groups.has(key)) {
             groups.set(key, {
@@ -411,10 +414,10 @@ const optimizeGroup = (group: RuleGroup): { optimizedRule: Rule; sourcesRemoved:
             const base = source.original.slice(source.clipStartChars.length);
             const key = base.toLowerCase();
             if (!baseMap.has(key)) {
+                baseMap.set(key, source);
+            } else {
                 // Prefer the version without clip chars
-                if (source.clipStartChars.length === 0) {
-                    baseMap.set(key, source);
-                } else if (!baseMap.get(key) || baseMap.get(key)!.clipStartChars.length > 0) {
+                if (source.clipStartChars.length === 0 && baseMap.get(key)!.clipStartChars.length > 0) {
                     baseMap.set(key, source);
                 }
             }
@@ -438,9 +441,10 @@ const optimizeGroup = (group: RuleGroup): { optimizedRule: Rule; sourcesRemoved:
             const base = source.original.slice(0, source.original.length - source.clipEndChars.length);
             const key = base.toLowerCase();
             if (!baseMap.has(key)) {
-                if (source.clipEndChars.length === 0) {
-                    baseMap.set(key, source);
-                } else if (!baseMap.get(key) || baseMap.get(key)!.clipEndChars.length > 0) {
+                baseMap.set(key, source);
+            } else {
+                // Prefer the version without clip chars
+                if (source.clipEndChars.length === 0 && baseMap.get(key)!.clipEndChars.length > 0) {
                     baseMap.set(key, source);
                 }
             }
@@ -509,50 +513,53 @@ const handleMatchTypeConflicts = (
     rulesRemoved: number;
 } => {
     const normalizeApostrophes = Boolean(buildOptions?.normalizeApostrophes);
-    const fromMap = new Map<string, Rule[]>();
 
-    // Group by normalized from value
+    // Per-source entry: links each individual source back to its originating rule
+    type SourceEntry = { rule: Rule; source: string; matchType: MatchType };
+
+    // Expand every rule into per-source entries
+    const fromMap = new Map<string, SourceEntry[]>();
     for (const rule of rules) {
-        for (const from of rule.from) {
-            const normalized = normalizeSource(from, normalizeApostrophes);
+        const matchType = rule.options?.match || MatchType.Any;
+        for (const source of rule.from) {
+            const normalized = normalizeSource(source, normalizeApostrophes);
             if (!fromMap.has(normalized)) {
                 fromMap.set(normalized, []);
             }
-            fromMap.get(normalized)!.push(rule);
+            fromMap.get(normalized)!.push({ matchType, rule, source });
         }
     }
 
     const conflicts: Array<{ from: string; rules: Rule[] }> = [];
-    const rulesToKeep = new Set<Rule>();
-    const rulesToRemove = new Set<Rule>();
-    let rulesRemoved = 0;
+    // Track which individual sources survive per rule
+    const survivingSources = new Map<Rule, Set<string>>();
+    // Track original source count per rule
+    const originalSourceCount = new Map<Rule, number>();
 
-    for (const [from, rulesForFrom] of fromMap) {
-        if (rulesForFrom.length <= 1) {
-            // Only one rule for this from value, keep it
-            if (rulesForFrom.length === 1) {
-                rulesToKeep.add(rulesForFrom[0]);
-            }
+    // Initialize: all sources survive by default
+    for (const rule of rules) {
+        survivingSources.set(rule, new Set(rule.from));
+        originalSourceCount.set(rule, rule.from.length);
+    }
+
+    for (const [normalizedFrom, entries] of fromMap) {
+        if (entries.length <= 1) {
             continue;
         }
 
-        // Deduplicate rules (same rule object might appear multiple times)
-        const uniqueRules = [...new Set(rulesForFrom)];
+        // Deduplicate entries from the same rule
+        const uniqueRules = [...new Set(entries.map((e) => e.rule))];
 
         // Check if to values differ
         const uniqueTo = new Set(uniqueRules.map((r) => r.to));
         if (uniqueTo.size > 1) {
             // Different to values - this is a conflict
-            conflicts.push({ from, rules: uniqueRules });
-            // Keep all conflicting rules for now
-            for (const rule of uniqueRules) {
-                rulesToKeep.add(rule);
-            }
+            conflicts.push({ from: normalizedFrom, rules: uniqueRules });
             continue;
         }
 
         // Same to value - check if we can consolidate match types
-        const matchTypes = uniqueRules.map((r) => r.options?.match || MatchType.Any);
+        const matchTypes = entries.map((e) => e.matchType);
         const hasAlone = matchTypes.includes(MatchType.Alone);
         const hasWhole = matchTypes.includes(MatchType.Whole);
         const hasAny = matchTypes.includes(MatchType.Any);
@@ -562,47 +569,47 @@ const handleMatchTypeConflicts = (
             // Consolidate to most permissive
             const mostPermissive = hasAny ? MatchType.Any : hasWhole ? MatchType.Whole : MatchType.Alone;
 
-            // Find the rule with the most permissive match type
-            let ruleToKeep: Rule | null = null;
-            for (const rule of uniqueRules) {
-                const ruleMatchType = rule.options?.match || MatchType.Any;
-                if (ruleMatchType === mostPermissive) {
-                    ruleToKeep = rule;
+            // Find the entry with the most permissive match type to keep
+            let entryToKeep: SourceEntry | null = null;
+            for (const entry of entries) {
+                if (entry.matchType === mostPermissive) {
+                    entryToKeep = entry;
                     break;
                 }
             }
 
-            if (ruleToKeep) {
-                // Mark which rules to keep and remove
-                rulesToKeep.add(ruleToKeep);
-                for (const rule of uniqueRules) {
-                    if (rule !== ruleToKeep) {
-                        rulesToRemove.add(rule);
-                        rulesRemoved++;
+            if (entryToKeep) {
+                // Remove this source from all other rules' surviving sets
+                for (const entry of entries) {
+                    if (entry !== entryToKeep) {
+                        survivingSources.get(entry.rule)?.delete(entry.source);
                     }
                 }
-            }
-        } else {
-            // All have same match type, keep all
-            for (const rule of uniqueRules) {
-                rulesToKeep.add(rule);
             }
         }
     }
 
-    // Build consolidated rules list
+    // Reconstruct consolidated rules
     const consolidatedRules: Rule[] = [];
+    let rulesRemoved = 0;
+
     for (const rule of rules) {
-        // Skip if explicitly marked for removal
-        if (rulesToRemove.has(rule)) {
-            continue;
-        }
-        // Keep if explicitly marked to keep OR if not processed at all
-        if (rulesToKeep.has(rule) || (!rulesToKeep.has(rule) && !rulesToRemove.has(rule))) {
-            // Avoid duplicates
+        const surviving = survivingSources.get(rule)!;
+        if (surviving.size === 0) {
+            // All sources were consolidated away — entire rule removed
+            rulesRemoved++;
+        } else if (surviving.size === originalSourceCount.get(rule)!) {
+            // All sources survived — keep original rule as-is
             if (!consolidatedRules.includes(rule)) {
                 consolidatedRules.push(rule);
             }
+        } else {
+            // Some sources were removed — create modified rule with surviving sources
+            const modifiedRule: Rule = {
+                ...rule,
+                from: rule.from.filter((s) => surviving.has(s)),
+            };
+            consolidatedRules.push(modifiedRule);
         }
     }
 
@@ -653,33 +660,39 @@ const detectOverwrittenRules = (
 const removeSubsets = (rules: Rule[]): { optimizedRules: Rule[]; rulesRemoved: number } => {
     const toRemove = new Set<Rule>();
 
-    for (let i = 0; i < rules.length; i++) {
-        for (let j = 0; j < rules.length; j++) {
-            if (i === j || toRemove.has(rules[i]) || toRemove.has(rules[j])) {
+    const precomputed = rules.map((r) => {
+        const optObj = r.options || {};
+        return {
+            fromSet: new Set(r.from),
+            optKey: JSON.stringify(optObj, Object.keys(optObj).sort()),
+            rule: r,
+        };
+    });
+
+    for (let i = 0; i < precomputed.length; i++) {
+        for (let j = 0; j < precomputed.length; j++) {
+            if (i === j || toRemove.has(precomputed[i].rule) || toRemove.has(precomputed[j].rule)) {
                 continue;
             }
 
-            const rule1 = rules[i];
-            const rule2 = rules[j];
+            const p1 = precomputed[i];
+            const p2 = precomputed[j];
 
             // Check if they have the same target
-            if (rule1.to !== rule2.to) {
+            if (p1.rule.to !== p2.rule.to) {
                 continue;
             }
 
             // Check if options match
-            if (JSON.stringify(rule1.options || {}) !== JSON.stringify(rule2.options || {})) {
+            if (p1.optKey !== p2.optKey) {
                 continue;
             }
 
             // Check if rule2 is a subset of rule1
-            const set1 = new Set(rule1.from);
-            const set2 = new Set(rule2.from);
-
-            if (set2.size < set1.size) {
-                const isSubset = [...set2].every((source) => set1.has(source));
+            if (p2.fromSet.size < p1.fromSet.size) {
+                const isSubset = [...p2.fromSet].every((source) => p1.fromSet.has(source));
                 if (isSubset) {
-                    toRemove.add(rule2);
+                    toRemove.add(p2.rule);
                 }
             }
         }
