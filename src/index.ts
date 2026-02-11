@@ -2,6 +2,7 @@ import { buildTrie, containsSource, containsTarget, searchAndReplace } from './t
 
 export { buildTrie, containsSource, containsTarget, searchAndReplace };
 export * from './constants.js';
+export { type OptimizeResult, optimizeRules } from './optimize.js';
 export * from './types.js';
 export {
     adjustCasing,

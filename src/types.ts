@@ -39,9 +39,7 @@ export type BuildTrieOptions = {
  * @param confirmOptions - The options specifying the conditions for confirmation.
  * @returns A boolean indicating whether the rule is considered (true) or not (false).
  */
-export type ConfirmCallback = {
-    (confirmOptions: ConfirmOptions): boolean;
-};
+export type ConfirmCallback = (confirmOptions: ConfirmOptions) => boolean;
 
 /**
  * Represents a single search and replace rule.

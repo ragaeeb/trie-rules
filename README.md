@@ -1,7 +1,12 @@
+<p align="center">
+  <img src="icon.png" width="128" alt="trie-rules icon">
+</p>
+
 # Table of Contents
 
 - [Introduction](#introduction)
 - [Features](#features)
+- [Live Demo](#live-demo)
 - [Usage Guide](#trie-rules-usage-guide)
     - [Installation](#installation)
     - [API](#api)
@@ -10,6 +15,7 @@
         - [containsTarget](#containstarget)
         - [containsSource](#containssource)
         - [confirmCallback](#confirmcallback)
+        - [optimizeRules](#optimizerules)
 - [Performance](#performance)
     - [Background History](#background-history)
     - [Advantages of trie-based search over regex](#advantages-of-trie-based-search-over-regex)
@@ -27,6 +33,7 @@
 [![codecov](https://codecov.io/gh/ragaeeb/trie-rules/graph/badge.svg?token=GI262PTZB8)](https://codecov.io/gh/ragaeeb/trie-rules)
 [![Size](https://deno.bundlejs.com/badge?q=trie-rules@latest&badge=detailed)](https://bundlejs.com/?q=trie-rules%40latest)
 ![typescript](https://badgen.net/badge/icon/typescript?icon=typescript&label&color=blue)
+[![Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://trie-rules.surge.sh)
 
 The `trie-rules` project is an efficient search and replace algorithm that performs replacements on any given text based on a predefined rule set.
 
@@ -38,9 +45,19 @@ However the rule set structure is flexible enough to apply to a wide range of ap
 
 - **High-performance trie builder** – Use `buildTrie` to normalise apostrophes and fan out case variants so that lookups remain fast even with thousands of rules.
 - **Deterministic matching utilities** – Check for rule coverage with `containsSource` and `containsTarget`, or run full replacements through `searchAndReplace` with opt-in confirmation callbacks.
+- **Rule optimization** – Use `optimizeRules` to automatically detect and consolidate redundant patterns: case-insensitive variants, apostrophe normalization, prefix deduplication, subset elimination, and conflict detection.
 - **Comprehensive text helpers** – Re-use the exported helpers such as `isAlphabeticLetter`, `findFirstAlphaIndex`, `generateCaseVariants`, `adjustCasing`, `adjustClipping`, and `insertWordIntoTrie` to implement bespoke trie-aware transformations.
-- **Rule level ergonomics** – Fine tune matching with `CaseSensitivity`, `MatchType`, `TriePattern`, and contextual clipping support.
+- **Rule-level ergonomics** – Fine-tune matching with `CaseSensitivity`, `MatchType`, `TriePattern`, and contextual clipping support.
 - **Modern toolchain** – The project now builds with a lightweight `tsdown` pipeline (powered by Bun and TypeScript) and uses Biome for linting and formatting.
+- **Export regression tests** – A post-build validation step (`test:exports`) type-checks and runtime-tests the built bundle to ensure all public API members and types are correctly exported.
+
+## Live Demo
+
+Try the interactive demo at **[trie-rules.surge.sh](https://trie-rules.surge.sh)**.
+
+The demo loads a real-world transliteration rule set, builds a trie, and lets you see `searchAndReplace` in action — click the text area to apply formatting, click outside to see the original, and hit Randomize for a fresh sample.
+
+The demo source lives in [`demo/`](./demo) and is deployed to [Surge](https://surge.sh) via `bun run deploy`.
 
 ## trie-rules Usage Guide
 # trie-rules Usage Guide
@@ -263,6 +280,57 @@ const replacedText = searchAndReplace(trie, text, { confirmCallback });
 console.log(replacedText); // Outputs: 'Mālik went home.'
 ```
 
+## optimizeRules
+
+`optimizeRules(rules: Rule[], options?: BuildTrieOptions): OptimizeResult`
+
+The `optimizeRules` function analyzes an array of rules and automatically consolidates redundant patterns, returning an optimized rule set along with statistics and warnings.
+
+### Optimizations Performed
+
+1. **Case sensitivity consolidation** – Detects sources that differ only in case (e.g., `['Source', 'source']`) and consolidates them into a single source with `casing: CaseSensitivity.Insensitive`.
+2. **Apostrophe normalization** – When `normalizeApostrophes: true` is set, consolidates sources that differ only in apostrophe-like characters.
+3. **Prefix optimization** – Detects redundant prefix variations (e.g., `['Bukhari', 'al-Bukhari']`) and adds a `prefix` option instead.
+4. **Clip pattern optimization** – Detects leading/trailing apostrophe-like characters and adds `clipStartPattern` / `clipEndPattern` options.
+5. **Subset elimination** – Removes rules whose sources are a subset of another rule with the same target.
+6. **Conflict detection** – Warns when the same source maps to different targets.
+7. **Match type consolidation** – Merges rules with different `MatchType` values for the same source/target, keeping the most permissive.
+
+### Parameters
+
+- `rules` (Array of `Rule` objects): The rules to optimize.
+- `options` (optional `BuildTrieOptions`): Same options as `buildTrie` (e.g., `normalizeApostrophes`).
+
+### Returns
+
+- `OptimizeResult`:
+    - `optimizedRules` (`Rule[]`): The optimized array of rules.
+    - `savings.sourcesRemoved` (`number`): How many individual sources were eliminated.
+    - `savings.rulesRemoved` (`number`): How many entire rules were eliminated.
+    - `warnings.conflicts` (`array`): Sources that map to different targets.
+    - `warnings.overwrittenRules` (`array`): Rules that would be overwritten in the trie.
+
+### Usage
+
+```js
+import { optimizeRules } from 'trie-rules';
+
+const rules = [
+    { from: ['Source', 'source'], to: 'Target' },
+    { from: ['Bukhari', 'al-Bukhari'], to: 'Bukhari' },
+    { from: ['Source1', 'Source2', 'Source3'], to: 'Target' },
+    { from: ['Source1', 'Source2'], to: 'Target' },
+];
+
+const result = optimizeRules(rules);
+console.log(result.optimizedRules);
+// Consolidated rules with fewer sources and automatic options
+console.log(result.savings);
+// { sourcesRemoved: N, rulesRemoved: M }
+console.log(result.warnings);
+// { conflicts: [...], overwritten: [...] }
+```
+
 ## Apostrophe Normalization
 
 The `normalizeApostrophes` feature allows for flexible matching of words containing apostrophe-like characters. When enabled, the following characters are treated as equivalent:
@@ -471,9 +539,21 @@ The repository ships with Bun-based scripts to keep builds reproducible:
 
 | Command | Description |
 | --- | --- |
-| `bun run build` | Bundles the library through the local `tsdown` pipeline and emits type declarations with `tsc`. |
-| `bun test` | Executes the Vitest-powered unit test suite (via Bun's test runner). |
+| `bun run build` | Bundles the library through the local `tsdown` pipeline and emits type declarations. Automatically runs `test:exports` post-build. |
+| `bun test` | Executes the unit test suite via Bun's test runner. |
+| `bun run test:exports` | Type-checks and runs the exports validation test (`testing/exports.test.ts`) against the built `dist/` bundle. |
 | `bun run lint` | Runs Biome using the settings in `biome.json` for linting. |
 | `bun run format` | Formats source files with Biome's formatter. |
+| `bun run benchmark` | Runs ESBench performance suites from `benchmark/`. |
+
+### Demo
+
+The interactive demo lives in `demo/` and is a Vite + Preact app that imports `trie-rules` from npm.
+
+| Command | Description |
+| --- | --- |
+| `bun run dev` | Starts the Vite dev server at `http://localhost:5173`. |
+| `bun run build` | Builds the production bundle into `demo/dist/`. |
+| `bun run deploy` | Builds and deploys to [trie-rules.surge.sh](https://trie-rules.surge.sh) via Surge. |
 
 When dependencies need updating, run `bun update --latest`. If your environment has restricted registry access, configure an appropriate mirror before running the command.
