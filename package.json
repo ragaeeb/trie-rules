@@ -7,7 +7,8 @@
     "@types/node": "^26.6.3",
     "esbench": "^0.8.1",
     "semantic-release": "^25.0.9",
-    "tsdown": "^0.23.0"
+    "tsdown": "^0.23.0",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "bun": ">=1.3.9",
@@ -45,7 +46,7 @@
     "format": "biome format",
     "lint": "biome lint --reporter=summary",
     "postbuild": "bun run test:exports",
-    "test:exports": "bunx tsc --ignoreConfig --noEmit testing/exports.test.ts --moduleResolution bundler --target esnext --module esnext --esModuleInterop --skipLibCheck --types bun-types,node && bun test testing/exports.test.ts"
+    "test:exports": "bunx tsc --noEmit testing/exports.test.ts --moduleResolution bundler --target esnext --module esnext --esModuleInterop --skipLibCheck --types bun-types,node && bun test testing/exports.test.ts"
   },
   "source": "src/index.ts",
   "type": "module",
