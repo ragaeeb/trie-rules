@@ -156,7 +156,7 @@ export const isValidMatch = (
  * @param {ConfirmCallback} [callback] - The confirmation callback.
  * @returns {boolean} True if the rule is considered, false otherwise.
  */
-export const isConsidered = (ruleOptions?: RuleOptions, callback?: ConfirmCallback) => {
+export const isConsidered = (ruleOptions?: RuleOptions, callback?: ConfirmCallback): boolean => {
     if (ruleOptions?.confirm && callback) {
         return callback(ruleOptions.confirm);
     }
@@ -169,7 +169,7 @@ export const isConsidered = (ruleOptions?: RuleOptions, callback?: ConfirmCallba
  * @param {RegExp | TriePattern} pattern - The clipping pattern.
  * @returns {RegExp} The corresponding regular expression.
  */
-export const mapTriePatternToRegex = (pattern: RegExp | TriePattern) => {
+export const mapTriePatternToRegex = (pattern: RegExp | TriePattern): RegExp => {
     if (pattern === TriePattern.Apostrophes) {
         return APOSTROPHE_LIKE_REGEX;
     }
