@@ -45,7 +45,7 @@
     "format": "biome format",
     "lint": "biome lint --reporter=summary",
     "postbuild": "bun run test:exports",
-    "test:exports": "bunx tsc --noEmit testing/exports.test.ts --moduleResolution bundler --target esnext --module esnext --esModuleInterop --skipLibCheck --types bun-types,node && bun test testing/exports.test.ts"
+    "test:exports": "bunx tsc --ignoreConfig --noEmit testing/exports.test.ts --moduleResolution bundler --target esnext --module esnext --esModuleInterop --skipLibCheck --types bun-types,node && bun test testing/exports.test.ts"
   },
   "source": "src/index.ts",
   "type": "module",
