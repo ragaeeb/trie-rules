@@ -1,13 +1,13 @@
 {
   "dependencies": {
-    "preact": "^10.28.3",
-    "trie-rules": "^3.3.0"
+    "preact": "^11.0.0",
+    "trie-rules": "^3.3.1"
   },
   "devDependencies": {
-    "@preact/preset-vite": "^2.10.3",
-    "@types/node": "^25.2.3",
-    "typescript": "~5.9.3",
-    "vite": "^8.0.0-beta.13"
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^26.6.3",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.1"
   },
   "name": "demo",
   "overrides": {
